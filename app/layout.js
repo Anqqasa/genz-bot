@@ -12,8 +12,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Si Paling Bot - Savage AI",
-  description: "AI Genz paling toxic dan savage",
+  title: "SiPaling.AI - Savage AI",
+  description: "Chatbot AI paling Savage & Chill se-Indonesia",
 };
 
 export const viewport = {

@@ -660,7 +660,7 @@ export default function Home() {
           <div className="header-info">
             <div className="avatar"><Bot size={32} /></div>
             <div>
-              <h1 className="bot-name">Si Paling Bot</h1>
+              <h1 className="bot-name">SiPaling.AI</h1>
               <span className="status"><span className="status-dot"></span> Online and Ready to Roast</span>
             </div>
           </div>
