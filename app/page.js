@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Bot, User, Volume2, Square, Share2, RefreshCw, Pencil, Trash2, Cloud, Paperclip, Mic, Menu, X, PlusCircle, Send, LogOut } from 'lucide-react';
+import { Bot, User, Volume2, Square, Share2, RefreshCw, Pencil, Trash2, Cloud, Paperclip, Mic, Menu, X, PlusCircle, Send, LogOut, MessageSquare, Smile, Meh, Flame, AlertCircle } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { supabase } from '../lib/supabase';
 import './page.css';
@@ -525,7 +525,9 @@ export default function Home() {
         <div className="mood-modal-overlay">
           <div className="mood-modal-content">
             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
-              <h2 style={{margin: 0, color: 'var(--text-primary)'}}>☁️ Login Cloud</h2>
+              <h2 style={{margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                <Cloud size={24} /> Login Cloud
+              </h2>
               <button onClick={() => setShowLoginModal(false)} style={{background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '0.2rem'}}><X size={24} /></button>
             </div>
             <p style={{marginBottom: '0'}}>Bikin username bebas buat nyimpen riwayat chat lu.</p>
@@ -552,7 +554,7 @@ export default function Home() {
                 />
               </label>
               
-              {loginError && <div className="error-text">❌ {loginError}</div>}
+              {loginError && <div className="error-text" style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}><AlertCircle size={16} /> {loginError}</div>}
               
               <button type="submit" className="login-submit-btn" disabled={isLoginLoading}>
                 {isLoginLoading ? 'Memproses...' : 'Masuk / Daftar'}
@@ -566,17 +568,17 @@ export default function Home() {
       {!hasSelectedMood && (
         <div className="mood-modal-overlay">
           <div className="mood-modal-content">
-            <h2>Pilih Vibe Bot Hari Ini 🎭</h2>
+            <h2 style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}><Bot size={24} /> Pilih Vibe Bot Hari Ini</h2>
             <p>Seberapa pedas kata-katanya yang lu siap terima?</p>
             <div className="mood-options">
-              <button onClick={() => {setToxicity(1); setHasSelectedMood(true); localStorage.setItem('genz_has_selected_mood', 'true');}} className="mood-btn chill">
-                🟢 Chill (Sopan)
+              <button onClick={() => {setToxicity(1); setHasSelectedMood(true); localStorage.setItem('genz_has_selected_mood', 'true');}} className="mood-btn chill" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center'}}>
+                <Smile size={18} /> Chill (Sopan)
               </button>
-              <button onClick={() => {setToxicity(2); setHasSelectedMood(true); localStorage.setItem('genz_has_selected_mood', 'true');}} className="mood-btn sarkas">
-                🟡 Sarkas (Ngeselin)
+              <button onClick={() => {setToxicity(2); setHasSelectedMood(true); localStorage.setItem('genz_has_selected_mood', 'true');}} className="mood-btn sarkas" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center'}}>
+                <Meh size={18} /> Sarkas (Ngeselin)
               </button>
-              <button onClick={() => {setToxicity(3); setHasSelectedMood(true); localStorage.setItem('genz_has_selected_mood', 'true');}} className="mood-btn savage">
-                🔴 Savage (Mental Aman?)
+              <button onClick={() => {setToxicity(3); setHasSelectedMood(true); localStorage.setItem('genz_has_selected_mood', 'true');}} className="mood-btn savage" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center'}}>
+                <Flame size={18} /> Savage (Mental Aman?)
               </button>
             </div>
           </div>
@@ -610,8 +612,8 @@ export default function Home() {
           {/* Auth Section */}
           {authUser ? (
             <div style={{marginTop: 'auto', padding: '1rem', borderTop: '1px solid var(--glass-border)'}}>
-              <div style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
-                👤 {authUser.email ? authUser.email.replace('@genz.bot', '') : 'User'}
+              <div style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: '0.4rem'}}>
+                <User size={14} /> {authUser.email ? authUser.email.replace('@genz.bot', '') : 'User'}
               </div>
               <button onClick={handleLogoutClick} className="new-chat-btn" style={{background: 'rgba(254, 9, 121, 0.2)', borderColor: 'var(--neon-pink)', color: 'var(--neon-pink)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}>
                 <LogOut size={16} /> Logout
