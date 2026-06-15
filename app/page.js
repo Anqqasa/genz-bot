@@ -559,6 +559,12 @@ export default function Home() {
               
               {loginError && <div className="error-text" style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}><AlertCircle size={16} /> {loginError}</div>}
               
+              {!process.env.NEXT_PUBLIC_SUPABASE_URL && (
+                <div style={{color: '#facc15', fontSize: '0.75rem', marginTop: '0.5rem', background: 'rgba(250, 204, 21, 0.1)', padding: '0.5rem', borderRadius: '4px'}}>
+                  ⚠️ <b>INFO VERCEL:</b> Kunci NEXT_PUBLIC_SUPABASE_URL saat ini KOSONG / tidak terbaca oleh sistem.
+                </div>
+              )}
+
               <button type="submit" className="login-submit-btn" disabled={isLoginLoading}>
                 {isLoginLoading ? 'Memproses...' : 'Masuk / Daftar'}
               </button>
