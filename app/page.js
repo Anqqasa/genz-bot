@@ -146,7 +146,13 @@ export default function Home() {
     
     if (authUser) {
       supabase.from('cloud_saves').upsert({ user_id: authUser.id, sessions_data: sessions })
-        .then(({error}) => { if(error) console.error("Gagal sync ke cloud", error); });
+        .then(({error}) => { 
+          if(error) {
+            console.error("Gagal sync ke cloud", error);
+            // Tambahkan alert agar kita tahu errornya
+            alert("Error nyimpen ke Cloud: " + error.message);
+          }
+        });
     } else {
       localStorage.setItem('genz-bot-sessions', JSON.stringify(sessions));
     }
