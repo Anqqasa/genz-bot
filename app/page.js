@@ -461,17 +461,23 @@ export default function Home() {
   };
 
   const handleLoginClick = async () => {
-    const email = window.prompt("Masukkan Email Anda:");
-    if (!email) return;
+    const username = window.prompt("Masukkan Username Anda:");
+    if (!username) return;
     const password = window.prompt("Buat / Masukkan Password (minimal 6 huruf):");
-    if (!password) return;
+    if (!password || password.length < 6) {
+      alert("Password minimal 6 karakter bos!");
+      return;
+    }
+
+    // Supabase butuh format email, jadi kita akali di belakang layar
+    const dummyEmail = `${username.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}@genz.bot`;
 
     // Coba Sign Up
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.signUp({ email: dummyEmail, password });
     
     if (error && error.message.includes("already registered")) {
       // Jika sudah terdaftar, lakukan Sign In
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email: dummyEmail, password });
       if (signInError) alert("Gagal Login: " + signInError.message);
     } else if (error) {
       alert("Gagal: " + error.message);
@@ -535,7 +541,7 @@ export default function Home() {
           {authUser ? (
             <div style={{marginTop: 'auto', padding: '1rem', borderTop: '1px solid var(--glass-border)'}}>
               <div style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
-                👤 {authUser.email}
+                👤 {authUser.email ? authUser.email.replace('@genz.bot', '') : 'User'}
               </div>
               <button onClick={handleLogoutClick} className="new-chat-btn" style={{background: 'rgba(254, 9, 121, 0.2)', borderColor: 'var(--neon-pink)', color: 'var(--neon-pink)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}>
                 <LogOut size={16} /> Logout
