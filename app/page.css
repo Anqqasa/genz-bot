@@ -677,3 +677,23 @@
   border: none;
   color: #a3b8cc;
 }
+
+/* Mobile Header Fixes */
+@media (max-width: 768px) {
+  .auth-badge {
+    display: none !important;
+  }
+  .status {
+    display: none !important;
+  }
+  .bot-name {
+    font-size: 1rem;
+  }
+  .toxicity-control {
+    width: 100px;
+    margin-left: auto;
+  }
+  .header-info {
+    flex: 0 1 auto;
+  }
+}
