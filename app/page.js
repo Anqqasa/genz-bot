@@ -668,6 +668,11 @@ export default function Home() {
               <span style={{cursor: 'pointer'}} onClick={() => setToxicity(3)}>Maut</span>
             </div>
           </div>
+          {authUser && (
+            <div className="auth-badge" style={{display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: 'var(--neon-purple)', background: 'rgba(139,92,246,0.1)', padding: '0.4rem 0.8rem', borderRadius: 'var(--radius-full)', border: '1px solid rgba(139,92,246,0.3)', marginLeft: '1rem'}} title="Cloud Sync Aktif">
+              <Cloud size={16} /> <b>{authUser.email ? authUser.email.replace('@genz.bot', '') : 'User'}</b>
+            </div>
+          )}
         </header>
 
         <div className="messages-area" ref={messagesAreaRef}>
