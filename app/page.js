@@ -33,6 +33,7 @@ export default function Home() {
   
   // Auth & Cloud State
   const [authUser, setAuthUser] = useState(null);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [hasSelectedMood, setHasSelectedMood] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   
@@ -54,11 +55,13 @@ export default function Home() {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setAuthUser(session?.user || null);
+      setIsAuthChecking(false);
     };
     checkUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setAuthUser(session?.user || null);
+      setIsAuthChecking(false);
     });
 
     return () => subscription.unsubscribe();
@@ -66,6 +69,8 @@ export default function Home() {
 
   // Initialize Data (Cloud atau Local)
   useEffect(() => {
+    if (isAuthChecking) return; // Tunggu sampai status login jelas
+
     const loadData = async () => {
       let loadedSessions = [];
       
@@ -109,16 +114,16 @@ export default function Home() {
       setIsInitialLoad(false);
     };
     
-    if (isInitialized) {
-      loadData();
-    } else {
+    if (!isInitialized) {
       loadData();
       if (window.speechSynthesis) {
         window.speechSynthesis.getVoices();
         window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
       }
+    } else {
+      loadData();
     }
-  }, [authUser]);
+  }, [authUser, isAuthChecking]);
 
   // Sinkronisasi messages ke active session
   useEffect(() => {
@@ -525,7 +530,13 @@ export default function Home() {
     await supabase.auth.signOut();
   };
 
-  if (!isInitialized) return null;
+  if (isAuthChecking || !isInitialized) {
+    return (
+      <div style={{height: '100dvh', width: '100vw', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#030305', color: 'var(--neon-cyan)', fontFamily: 'var(--font-main)'}}>
+        <div className="loading-indicator"><span>.</span><span>.</span><span>.</span></div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-layout">
