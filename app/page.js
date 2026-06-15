@@ -24,7 +24,7 @@ export default function Home() {
   const [sessions, setSessions] = useState([]);
   const [activeSessionId, setActiveSessionId] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [toxicity, setToxicity] = useState(3);
+  const [toxicity, setToxicity] = useState(2);
   const [selectedImage, setSelectedImage] = useState(null);
   const [playingIndex, setPlayingIndex] = useState(null);
   const [editingIndex, setEditingIndex] = useState(null);
