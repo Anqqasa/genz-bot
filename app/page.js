@@ -69,6 +69,12 @@ export default function Home() {
     const loadData = async () => {
       let loadedSessions = [];
       
+      // Load hasSelectedMood dari LocalStorage
+      const savedMoodFlag = localStorage.getItem('genz_has_selected_mood');
+      if (savedMoodFlag) {
+        setHasSelectedMood(true);
+      }
+
       if (authUser) {
         try {
           const { data, error } = await supabase.from('cloud_saves').select('sessions_data').eq('user_id', authUser.id).single();
@@ -563,13 +569,13 @@ export default function Home() {
             <h2>Pilih Vibe Bot Hari Ini 🎭</h2>
             <p>Seberapa pedas kata-katanya yang lu siap terima?</p>
             <div className="mood-options">
-              <button onClick={() => {setToxicity(1); setHasSelectedMood(true)}} className="mood-btn chill">
+              <button onClick={() => {setToxicity(1); setHasSelectedMood(true); localStorage.setItem('genz_has_selected_mood', 'true');}} className="mood-btn chill">
                 🟢 Chill (Sopan)
               </button>
-              <button onClick={() => {setToxicity(2); setHasSelectedMood(true)}} className="mood-btn sarkas">
+              <button onClick={() => {setToxicity(2); setHasSelectedMood(true); localStorage.setItem('genz_has_selected_mood', 'true');}} className="mood-btn sarkas">
                 🟡 Sarkas (Ngeselin)
               </button>
-              <button onClick={() => {setToxicity(3); setHasSelectedMood(true)}} className="mood-btn savage">
+              <button onClick={() => {setToxicity(3); setHasSelectedMood(true); localStorage.setItem('genz_has_selected_mood', 'true');}} className="mood-btn savage">
                 🔴 Savage (Mental Aman?)
               </button>
             </div>
