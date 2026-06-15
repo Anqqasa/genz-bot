@@ -461,8 +461,21 @@ export default function Home() {
   };
 
   const handleLoginClick = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
-    if (error) alert("Gagal login: " + error.message);
+    const email = window.prompt("Masukkan Email Anda:");
+    if (!email) return;
+    const password = window.prompt("Buat / Masukkan Password (minimal 6 huruf):");
+    if (!password) return;
+
+    // Coba Sign Up
+    const { error } = await supabase.auth.signUp({ email, password });
+    
+    if (error && error.message.includes("already registered")) {
+      // Jika sudah terdaftar, lakukan Sign In
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) alert("Gagal Login: " + signInError.message);
+    } else if (error) {
+      alert("Gagal: " + error.message);
+    }
   };
 
   const handleLogoutClick = async () => {
