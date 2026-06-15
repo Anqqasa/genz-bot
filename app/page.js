@@ -27,6 +27,9 @@ export default function Home() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [playingIndex, setPlayingIndex] = useState(null);
   
+  // Fitur Penyimpanan Lokal (LocalStorage)
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
   const messagesAreaRef = useRef(null);
   const shouldSpeakRef = useRef(false);
   const recognitionRef = useRef(null);
@@ -60,6 +63,7 @@ export default function Home() {
     }
     
     setIsInitialized(true);
+    setIsInitialLoad(false);
     
     if (window.speechSynthesis) {
       window.speechSynthesis.getVoices();
@@ -69,7 +73,7 @@ export default function Home() {
 
   // Sinkronisasi messages ke active session
   useEffect(() => {
-    if (!isInitialized || !activeSessionId) return;
+    if (!isInitialized || !activeSessionId || isInitialLoad) return;
     setSessions(prev => prev.map(s => {
       if (s.id === activeSessionId) {
         // Ganti judul otomatis berdasarkan pesan pertama user
@@ -90,9 +94,9 @@ export default function Home() {
 
   // Simpan sessions ke LocalStorage setiap ada perubahan
   useEffect(() => {
-    if (!isInitialized) return;
+    if (!isInitialized || isInitialLoad) return;
     localStorage.setItem('genz-bot-sessions', JSON.stringify(sessions));
-  }, [sessions, isInitialized]);
+  }, [sessions, isInitialLoad]);
 
   // Efek Timer Cooldown
   useEffect(() => {
@@ -147,36 +151,138 @@ export default function Home() {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        // Kompresi gambar dengan Canvas agar ukurannya tidak terlalu besar
+      reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
+          // Kompresi Gambar dengan Canvas (Otomatis perkecil ukuran)
           const canvas = document.createElement('canvas');
-          const MAX_SIZE = 800;
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
           let width = img.width;
           let height = img.height;
-          
-          if (width > height && width > MAX_SIZE) {
-            height *= MAX_SIZE / width;
-            width = MAX_SIZE;
-          } else if (height > MAX_SIZE) {
-            width *= MAX_SIZE / height;
-            height = MAX_SIZE;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
           }
-          
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
           
-          // Ubah ke JPEG kualitas 70% agar base64 string-nya kecil
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-          setSelectedImage(compressedBase64);
+          // Konversi ke JPEG dengan kualitas 70%
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          setSelectedImage(compressedDataUrl);
         };
-        img.src = reader.result;
+        img.src = e.target.result;
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const sendMessage = async (e, customText = null, customImage = null, overrideMessages = null) => {
+    if (e) e.preventDefault();
+    const textToSend = customText !== null ? customText : input;
+    const imageToSend = customImage !== null ? customImage : selectedImage;
+    
+    if (!textToSend.trim() && !imageToSend) return;
+
+    // Jika dipanggil oleh fitur Regenerate, gunakan overrideMessages, jika tidak gunakan state saat ini
+    const currentMessages = overrideMessages !== null ? overrideMessages : messages;
+
+    const newUserMessage = { role: 'user', content: textToSend, image: imageToSend };
+    setMessages([...currentMessages, newUserMessage]);
+    
+    // Hanya clear state input jika ini pesan baru (bukan regenerate)
+    if (customText === null) {
+      setInput('');
+      setSelectedImage(null);
+    }
+    setIsLoading(true);
+
+    setMessages((prev) => [...prev, { role: 'model', content: '' }]);
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          message: textToSend, 
+          history: currentMessages, 
+          image: imageToSend, 
+          toxicity 
+        }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: 'model', content: errorText };
+          return updated;
+        });
+        setIsLoading(false);
+        if (errorText.includes('MENIT') || errorText.includes('kecepetan')) {
+          setCooldown(35);
+        }
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let botResponse = '';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        botResponse += decoder.decode(value, { stream: true });
+        setMessages(prev => {
+          const newMsgs = [...prev];
+          newMsgs[newMsgs.length - 1].content = botResponse;
+          return newMsgs;
+        });
+      }
+      
+      if (shouldSpeakRef.current) speakText(botResponse);
+    } catch (error) {
+      setMessages(prev => {
+        const newArray = [...prev];
+        newArray[newArray.length - 1].content += ' (Error API, coba lagi ngab)';
+        return newArray;
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const regenerateLastMessage = () => {
+    if (messages.length < 2) return;
+    
+    // Cari pesan user terakhir
+    let lastUserIndex = messages.length - 1;
+    while (lastUserIndex >= 0 && messages[lastUserIndex].role !== 'user') {
+      lastUserIndex--;
+    }
+    
+    if (lastUserIndex === -1) return;
+    
+    const lastUserMsg = messages[lastUserIndex];
+    // Ambil histori chat sebelum pesan user terakhir
+    const historyBeforeLastUser = messages.slice(0, lastUserIndex);
+    
+    // Panggil sendMessage dengan meng-override input dan histori
+    sendMessage(null, lastUserMsg.content, lastUserMsg.image, historyBeforeLastUser);
+  };
+
+  const handleLoginClick = () => {
+    alert("🔒 Fitur Cloud Sync masih dalam tahap perakitan! Saat ini riwayat obrolan Anda tersimpan aman di perangkat (LocalStorage) ini saja.");
   };
 
   const captureScreenshot = async (e, msgIndex) => {
@@ -200,7 +306,6 @@ export default function Home() {
   };
 
   const speakText = (text, msgIndex) => {
-    // Jika tombol yang sama ditekan lagi saat sedang bicara -> STOP!
     if (playingIndex === msgIndex && currentAudioRef.current) {
       currentAudioRef.current.pause();
       currentAudioRef.current = null;
@@ -208,7 +313,6 @@ export default function Home() {
       return;
     }
 
-    // Hentikan audio yang sedang berjalan jika tombol pesan lain ditekan
     if (currentAudioRef.current) {
       currentAudioRef.current.pause();
       currentAudioRef.current = null;
@@ -216,14 +320,12 @@ export default function Home() {
 
     setPlayingIndex(msgIndex);
 
-    // Bersihkan teks dari Markdown
     const cleanText = text.replace(/[*#_`~]/g, '').trim();
     if (!cleanText) {
       setPlayingIndex(null);
       return;
     }
 
-    // Pemecah Teks (Chunking) maks 180 karakter per potong
     const words = cleanText.split(' ');
     const chunks = [];
     let currentChunk = '';
@@ -242,21 +344,19 @@ export default function Home() {
     let currentChunkIndex = 0;
 
     const playNext = () => {
-      // Cek apakah index masih sama (artinya belum di-stop user)
       if (playingIndex !== null && playingIndex !== msgIndex) return;
 
       if (currentChunkIndex >= chunks.length) {
         currentAudioRef.current = null;
         setPlayingIndex(null);
-        return; // Selesai
+        return;
       }
       
       const chunk = chunks[currentChunkIndex];
-      // URL Proxy Lokal (Backend kita yang akan mengambilkan MP3 dari Google)
       const url = `/api/tts?text=${encodeURIComponent(chunk)}`;
       
       const audio = new Audio(url);
-      audio.playbackRate = 1.3; // Mempercepat tempo suara
+      audio.playbackRate = 1.3;
       currentAudioRef.current = audio;
       
       audio.onended = () => {
@@ -269,9 +369,7 @@ export default function Home() {
         playNext();
       };
 
-      audio.play().catch(e => {
-        console.error("Browser memblokir autoplay audio:", e);
-      });
+      audio.play().catch(e => console.error(e));
     };
 
     playNext();
@@ -306,70 +404,6 @@ export default function Home() {
     recognition.start();
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if ((!input.trim() && !selectedImage) || isLoading) return;
-
-    const userMsg = input.trim();
-    const imageData = selectedImage;
-    setInput('');
-    setSelectedImage(null);
-    
-    const newUserMessage = { role: 'user', content: userMsg, image: imageData };
-    const newMessages = [...messages, newUserMessage];
-    setMessages(newMessages);
-    setIsLoading(true);
-
-    setMessages((prev) => [...prev, { role: 'model', content: '' }]);
-
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMsg, history: messages, image: imageData, toxicity }),
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        setMessages((prev) => {
-          const updated = [...prev];
-          updated[updated.length - 1] = { role: 'model', content: errorText };
-          return updated;
-        });
-        setIsLoading(false);
-        if (errorText.includes('MENIT') || errorText.includes('kecepetan')) {
-          setCooldown(35); // Set 35 detik sesuai permintaan API Google
-        }
-        return;
-      }
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let botResponse = '';
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        botResponse += decoder.decode(value, { stream: true });
-        setMessages(prev => {
-          const newMsgs = [...prev];
-          newMsgs[newMsgs.length - 1].content = botResponse;
-          return newMsgs;
-        });
-      }
-      
-      if (shouldSpeakRef.current) speakText(botResponse);
-    } catch (error) {
-      setMessages((prev) => {
-        const updated = [...prev];
-        updated[updated.length - 1] = { role: 'model', content: 'Yah, koneksi lu bapuk nih kayaknya.' };
-        return updated;
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   if (!isInitialized) return null;
 
   return (
@@ -398,6 +432,10 @@ export default function Home() {
               <button onClick={(e) => deleteSession(s.id, e)} className="delete-session" title="Hapus">🗑️</button>
             </div>
           ))}
+          {/* Tombol Login */}
+          <button onClick={handleLoginClick} className="new-chat-btn" style={{marginTop: 'auto', background: 'rgba(139, 92, 246, 0.2)', borderColor: 'var(--neon-purple)', color: 'var(--neon-purple)', textShadow: 'none'}}>
+            ☁️ Login (Cloud Sync)
+          </button>
         </div>
       </aside>
 
@@ -440,6 +478,13 @@ export default function Home() {
                         {playingIndex === index ? '⏹️ Stop' : '🔊 Dengarkan'}
                       </button>
                       <button onClick={(e) => captureScreenshot(e, index)} className="play-audio-btn">📸 Share</button>
+                      
+                      {/* Tampilkan tombol Regenerate hanya pada pesan bot terakhir */}
+                      {index === messages.length - 1 && (
+                        <button onClick={regenerateLastMessage} className="play-audio-btn" style={{borderColor: 'var(--neon-pink)', color: 'var(--neon-pink)'}}>
+                          🔄 Regenerate
+                        </button>
+                      )}
                     </div>
                   </>
                 ) : (
@@ -466,7 +511,7 @@ export default function Home() {
           </div>
         )}
 
-        <form className="input-area" onSubmit={handleSubmit}>
+        <form className="input-area" onSubmit={(e) => sendMessage(e)}>
           <input 
             type="file" 
             accept="image/*" 
