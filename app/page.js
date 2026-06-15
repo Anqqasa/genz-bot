@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Bot, User, Volume2, Square, Share2, RefreshCw, Pencil, Trash2, Cloud, Paperclip, Mic, Menu, X, PlusCircle, Send } from 'lucide-react';
+import { Bot, User, Volume2, Square, Share2, RefreshCw, Pencil, Trash2, Cloud, Paperclip, Mic, Menu, X, PlusCircle, Send, LogOut } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import { supabase } from '../lib/supabase';
 import './page.css';
 
 const DEFAULT_MESSAGE = { 
@@ -24,13 +25,15 @@ export default function Home() {
   const [sessions, setSessions] = useState([]);
   const [activeSessionId, setActiveSessionId] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [toxicity, setToxicity] = useState(2);
+  const [toxicity, setToxicity] = useState(2); // Default Sarkas
   const [selectedImage, setSelectedImage] = useState(null);
   const [playingIndex, setPlayingIndex] = useState(null);
   const [editingIndex, setEditingIndex] = useState(null);
   const [editText, setEditText] = useState('');
   
-  // Fitur Penyimpanan Lokal (LocalStorage)
+  // Auth & Cloud State
+  const [authUser, setAuthUser] = useState(null);
+  const [hasSelectedMood, setHasSelectedMood] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const messagesAreaRef = useRef(null);
@@ -39,47 +42,73 @@ export default function Home() {
   const fileInputRef = useRef(null);
   const currentAudioRef = useRef(null);
 
-  // Initialize Data
+  // Cek Auth Supabase
   useEffect(() => {
-    const saved = localStorage.getItem('genz-bot-sessions');
-    const oldSaved = localStorage.getItem('genz-bot-chat');
-    
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed.length > 0) {
-        setSessions(parsed);
-        setActiveSessionId(parsed[0].id);
-        setMessages(parsed[0].messages);
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setAuthUser(session?.user || null);
+    };
+    checkUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthUser(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Initialize Data (Cloud atau Local)
+  useEffect(() => {
+    const loadData = async () => {
+      let loadedSessions = [];
+      
+      if (authUser) {
+        try {
+          const { data, error } = await supabase.from('cloud_saves').select('sessions_data').eq('user_id', authUser.id).single();
+          if (data && data.sessions_data) {
+            loadedSessions = data.sessions_data;
+          } else {
+            // Migrasi dari local ke cloud jika belum ada
+            const localSaved = localStorage.getItem('genz-bot-sessions');
+            if (localSaved) {
+              loadedSessions = JSON.parse(localSaved);
+              await supabase.from('cloud_saves').upsert({ user_id: authUser.id, sessions_data: loadedSessions });
+            }
+          }
+        } catch (e) { console.error('Gagal memuat data cloud', e); }
+      } else {
+        const saved = localStorage.getItem('genz-bot-sessions');
+        if (saved) loadedSessions = JSON.parse(saved);
+      }
+      
+      if (loadedSessions.length > 0) {
+        setSessions(loadedSessions);
+        setActiveSessionId(loadedSessions[0].id);
+        setMessages(loadedSessions[0].messages);
       } else {
         createNewSession();
       }
-    } else if (oldSaved) {
-      // Migrasi data lama
-      const parsedOld = JSON.parse(oldSaved);
-      const newSession = { id: Date.now().toString(), title: 'Chat Lama', messages: parsedOld };
-      setSessions([newSession]);
-      setActiveSessionId(newSession.id);
-      setMessages(parsedOld);
-      localStorage.removeItem('genz-bot-chat');
+      
+      setIsInitialized(true);
+      setIsInitialLoad(false);
+    };
+    
+    if (isInitialized) {
+      loadData();
     } else {
-      createNewSession();
+      loadData();
+      if (window.speechSynthesis) {
+        window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+      }
     }
-    
-    setIsInitialized(true);
-    setIsInitialLoad(false);
-    
-    if (window.speechSynthesis) {
-      window.speechSynthesis.getVoices();
-      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-    }
-  }, []);
+  }, [authUser]);
 
   // Sinkronisasi messages ke active session
   useEffect(() => {
     if (!isInitialized || !activeSessionId || isInitialLoad) return;
     setSessions(prev => prev.map(s => {
       if (s.id === activeSessionId) {
-        // Ganti judul otomatis berdasarkan pesan pertama user
         let newTitle = s.title;
         if (s.title.startsWith('Chat ')) {
           const firstUserMsg = messages.find(m => m.role === 'user');
@@ -95,11 +124,17 @@ export default function Home() {
     scrollToBottom();
   }, [messages, activeSessionId, isInitialized]);
 
-  // Simpan sessions ke LocalStorage setiap ada perubahan
+  // Simpan sessions ke Cloud atau LocalStorage setiap ada perubahan
   useEffect(() => {
     if (!isInitialized || isInitialLoad) return;
-    localStorage.setItem('genz-bot-sessions', JSON.stringify(sessions));
-  }, [sessions, isInitialLoad]);
+    
+    if (authUser) {
+      supabase.from('cloud_saves').upsert({ user_id: authUser.id, sessions_data: sessions })
+        .then(({error}) => { if(error) console.error("Gagal sync ke cloud", error); });
+    } else {
+      localStorage.setItem('genz-bot-sessions', JSON.stringify(sessions));
+    }
+  }, [sessions, isInitialLoad, authUser, isInitialized]);
 
   // Efek Timer Cooldown
   useEffect(() => {
@@ -284,10 +319,6 @@ export default function Home() {
     sendMessage(null, lastUserMsg.content, lastUserMsg.image, historyBeforeLastUser);
   };
 
-  const handleLoginClick = () => {
-    alert("🔒 Fitur Cloud Sync masih dalam tahap perakitan! Saat ini riwayat obrolan Anda tersimpan aman di perangkat (LocalStorage) ini saja.");
-  };
-
   const captureScreenshot = async (e, msgIndex) => {
     e.target.innerText = '📸 Loading...';
     const chatElement = document.getElementById(`msg-wrap-${msgIndex}`);
@@ -429,10 +460,40 @@ export default function Home() {
     sendMessage(null, editText, oldImage, historyBeforeEdit);
   };
 
+  const handleLoginClick = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+    if (error) alert("Gagal login: " + error.message);
+  };
+
+  const handleLogoutClick = async () => {
+    await supabase.auth.signOut();
+  };
+
   if (!isInitialized) return null;
 
   return (
     <div className="app-layout">
+      {/* Mood Selection Modal */}
+      {!hasSelectedMood && (
+        <div className="mood-modal-overlay">
+          <div className="mood-modal-content">
+            <h2>Pilih Vibe Bot Hari Ini 🎭</h2>
+            <p>Seberapa pedas kata-katanya yang lu siap terima?</p>
+            <div className="mood-options">
+              <button onClick={() => {setToxicity(1); setHasSelectedMood(true)}} className="mood-btn chill">
+                🟢 Chill (Sopan)
+              </button>
+              <button onClick={() => {setToxicity(2); setHasSelectedMood(true)}} className="mood-btn sarkas">
+                🟡 Sarkas (Ngeselin)
+              </button>
+              <button onClick={() => {setToxicity(3); setHasSelectedMood(true)}} className="mood-btn savage">
+                🔴 Savage (Mental Aman?)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar Overlay untuk Mobile */}
       <div 
         className={`sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} 
@@ -457,10 +518,21 @@ export default function Home() {
               <button onClick={(e) => deleteSession(s.id, e)} className="delete-session" title="Hapus"><Trash2 size={16} /></button>
             </div>
           ))}
-          {/* Tombol Login */}
-          <button onClick={handleLoginClick} className="new-chat-btn" style={{marginTop: 'auto', background: 'rgba(139, 92, 246, 0.2)', borderColor: 'var(--neon-purple)', color: 'var(--neon-purple)', textShadow: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}>
-            <Cloud size={18} /> Login (Cloud Sync)
-          </button>
+          {/* Auth Section */}
+          {authUser ? (
+            <div style={{marginTop: 'auto', padding: '1rem', borderTop: '1px solid var(--glass-border)'}}>
+              <div style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                👤 {authUser.email}
+              </div>
+              <button onClick={handleLogoutClick} className="new-chat-btn" style={{background: 'rgba(254, 9, 121, 0.2)', borderColor: 'var(--neon-pink)', color: 'var(--neon-pink)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}>
+                <LogOut size={16} /> Logout
+              </button>
+            </div>
+          ) : (
+            <button onClick={handleLoginClick} className="new-chat-btn" style={{marginTop: 'auto', background: 'rgba(139, 92, 246, 0.2)', borderColor: 'var(--neon-purple)', color: 'var(--neon-purple)', textShadow: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}>
+              <Cloud size={18} /> Login (Cloud Sync)
+            </button>
+          )}
         </div>
       </aside>
 
