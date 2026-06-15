@@ -153,6 +153,7 @@
 /* Main Chat Container */
 .chat-container {
   flex: 1;
+  min-width: 0; /* Mencegah flexbox melewati lebar layar */
   display: flex;
   flex-direction: column;
   height: 100dvh;
@@ -188,6 +189,13 @@
   .menu-btn {
     display: block;
   }
+  .chat-container {
+    padding: max(1rem, env(safe-area-inset-top)) 0.8rem max(1rem, env(safe-area-inset-bottom));
+  }
+  .chat-header {
+    padding: 0.8rem;
+    gap: 0.5rem;
+  }
 }
 
 .header-info {
@@ -195,6 +203,7 @@
   align-items: center;
   gap: 1rem;
   flex: 1;
+  min-width: 0; /* Allow content to shrink */
 }
 
 .avatar {
@@ -233,6 +242,25 @@
   box-shadow: 0 0 8px var(--neon-cyan);
 }
 
+@media (max-width: 768px) {
+  .header-info {
+    gap: 0.5rem;
+  }
+  .avatar {
+    font-size: 1.5rem;
+    padding: 0.4rem;
+  }
+  .bot-name {
+    font-size: 1.1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .status {
+    font-size: 0.75rem;
+  }
+}
+
 /* Toxicity Slider */
 .toxicity-control {
   display: flex;
@@ -265,6 +293,15 @@
   background: var(--neon-pink);
   cursor: pointer;
   box-shadow: 0 0 10px var(--neon-pink);
+}
+
+@media (max-width: 768px) {
+  .toxicity-slider {
+    width: 60px;
+  }
+  .toxicity-control label {
+    font-size: 0.7rem;
+  }
 }
 
 /* Messages Area */
@@ -315,6 +352,8 @@
   line-height: 1.6;
   font-size: 0.95rem;
   word-wrap: break-word;
+  overflow-wrap: anywhere;
+  min-width: 0; /* Allow text to wrap correctly */
   backdrop-filter: var(--glass-blur);
   font-weight: 300;
 }
