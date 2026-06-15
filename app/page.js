@@ -35,6 +35,13 @@ export default function Home() {
   const [authUser, setAuthUser] = useState(null);
   const [hasSelectedMood, setHasSelectedMood] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  
+  // Login Modal State
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [isLoginLoading, setIsLoginLoading] = useState(false);
 
   const messagesAreaRef = useRef(null);
   const shouldSpeakRef = useRef(false);
@@ -460,28 +467,43 @@ export default function Home() {
     sendMessage(null, editText, oldImage, historyBeforeEdit);
   };
 
-  const handleLoginClick = async () => {
-    const username = window.prompt("Masukkan Username Anda:");
-    if (!username) return;
-    const password = window.prompt("Buat / Masukkan Password (minimal 6 huruf):");
-    if (!password || password.length < 6) {
-      alert("Password minimal 6 karakter bos!");
-      return;
-    }
+  const handleLoginClick = () => {
+    setShowLoginModal(true);
+    setLoginError('');
+  };
+
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+    if (!loginUsername) { setLoginError('Username tidak boleh kosong!'); return; }
+    if (!loginPassword || loginPassword.length < 6) { setLoginError('Password minimal 6 karakter bos!'); return; }
+
+    setIsLoginLoading(true);
+    setLoginError('');
 
     // Supabase butuh format email, jadi kita akali di belakang layar
-    const dummyEmail = `${username.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}@genz.bot`;
+    const dummyEmail = `${loginUsername.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}@genz.bot`;
 
     // Coba Sign Up
-    const { error } = await supabase.auth.signUp({ email: dummyEmail, password });
+    const { error } = await supabase.auth.signUp({ email: dummyEmail, password: loginPassword });
     
     if (error && error.message.includes("already registered")) {
       // Jika sudah terdaftar, lakukan Sign In
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email: dummyEmail, password });
-      if (signInError) alert("Gagal Login: " + signInError.message);
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email: dummyEmail, password: loginPassword });
+      if (signInError) {
+        setLoginError("Gagal Login: " + signInError.message);
+      } else {
+        setShowLoginModal(false);
+        setLoginUsername('');
+        setLoginPassword('');
+      }
     } else if (error) {
-      alert("Gagal: " + error.message);
+      setLoginError(error.message);
+    } else {
+      setShowLoginModal(false);
+      setLoginUsername('');
+      setLoginPassword('');
     }
+    setIsLoginLoading(false);
   };
 
   const handleLogoutClick = async () => {
@@ -492,6 +514,48 @@ export default function Home() {
 
   return (
     <div className="app-layout">
+      {/* Login Modal */}
+      {showLoginModal && (
+        <div className="mood-modal-overlay">
+          <div className="mood-modal-content">
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
+              <h2 style={{margin: 0, color: 'var(--text-primary)'}}>☁️ Login Cloud</h2>
+              <button onClick={() => setShowLoginModal(false)} style={{background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '0.2rem'}}><X size={24} /></button>
+            </div>
+            <p style={{marginBottom: '0'}}>Bikin username bebas buat nyimpen riwayat chat lu.</p>
+            
+            <form className="login-form" onSubmit={handleLoginSubmit}>
+              <label>
+                Username
+                <input 
+                  type="text" 
+                  value={loginUsername} 
+                  onChange={(e) => setLoginUsername(e.target.value)} 
+                  className="login-input" 
+                  placeholder="Contoh: anqqasa" 
+                />
+              </label>
+              <label>
+                Password
+                <input 
+                  type="password" 
+                  value={loginPassword} 
+                  onChange={(e) => setLoginPassword(e.target.value)} 
+                  className="login-input" 
+                  placeholder="Minimal 6 karakter" 
+                />
+              </label>
+              
+              {loginError && <div className="error-text">❌ {loginError}</div>}
+              
+              <button type="submit" className="login-submit-btn" disabled={isLoginLoading}>
+                {isLoginLoading ? 'Memproses...' : 'Masuk / Daftar'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Mood Selection Modal */}
       {!hasSelectedMood && (
         <div className="mood-modal-overlay">
