@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Bot, User, Volume2, Square, Share2, RefreshCw, Pencil, Trash2, Cloud, Paperclip, Mic, Menu, X, PlusCircle, Send } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import './page.css';
 
@@ -442,9 +443,9 @@ export default function Home() {
       <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <h2>Riwayat Chat</h2>
-          <button onClick={() => setIsSidebarOpen(false)} className="close-sidebar">✖</button>
+          <button onClick={() => setIsSidebarOpen(false)} className="close-sidebar"><X size={20} /></button>
         </div>
-        <button onClick={createNewSession} className="new-chat-btn">➕ Chat Baru</button>
+        <button onClick={createNewSession} className="new-chat-btn" style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}><PlusCircle size={18} /> Chat Baru</button>
         <div className="session-list">
           {sessions.map(s => (
             <div 
@@ -453,12 +454,12 @@ export default function Home() {
               onClick={() => loadSession(s.id)}
             >
               <span>{s.title}</span>
-              <button onClick={(e) => deleteSession(s.id, e)} className="delete-session" title="Hapus">🗑️</button>
+              <button onClick={(e) => deleteSession(s.id, e)} className="delete-session" title="Hapus"><Trash2 size={16} /></button>
             </div>
           ))}
           {/* Tombol Login */}
-          <button onClick={handleLoginClick} className="new-chat-btn" style={{marginTop: 'auto', background: 'rgba(139, 92, 246, 0.2)', borderColor: 'var(--neon-purple)', color: 'var(--neon-purple)', textShadow: 'none'}}>
-            ☁️ Login (Cloud Sync)
+          <button onClick={handleLoginClick} className="new-chat-btn" style={{marginTop: 'auto', background: 'rgba(139, 92, 246, 0.2)', borderColor: 'var(--neon-purple)', color: 'var(--neon-purple)', textShadow: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}>
+            <Cloud size={18} /> Login (Cloud Sync)
           </button>
         </div>
       </aside>
@@ -466,9 +467,9 @@ export default function Home() {
       {/* Main Chat */}
       <main className="chat-container">
         <header className="chat-header">
-          <button onClick={() => setIsSidebarOpen(true)} className="menu-btn">☰</button>
+          <button onClick={() => setIsSidebarOpen(true)} className="menu-btn"><Menu size={24} /></button>
           <div className="header-info">
-            <div className="avatar">🤖</div>
+            <div className="avatar"><Bot size={32} /></div>
             <div>
               <h1 className="bot-name">Si Paling Bot</h1>
               <span className="status"><span className="status-dot"></span> Online and Ready to Roast</span>
@@ -489,7 +490,7 @@ export default function Home() {
         <div className="messages-area" ref={messagesAreaRef}>
           {messages.map((msg, index) => (
             <div key={index} id={`msg-wrap-${index}`} className={`message-wrapper ${msg.role}`}>
-              {msg.role === 'model' && <div className="msg-avatar">🤖</div>}
+              {msg.role === 'model' && <div className="msg-avatar"><Bot size={24} /></div>}
               <div className={`message ${msg.role}`}>
                 {msg.image && <img src={msg.image} alt="User Upload" className="uploaded-image" />}
                 {msg.role === 'model' ? (
@@ -498,15 +499,15 @@ export default function Home() {
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content || '...'}</ReactMarkdown>
                     </div>
                     <div className="msg-actions">
-                      <button onClick={() => speakText(msg.content, index)} className="play-audio-btn">
-                        {playingIndex === index ? '⏹️ Stop' : '🔊 Dengarkan'}
+                      <button onClick={() => speakText(msg.content, index)} className="play-audio-btn" style={{display: 'flex', alignItems: 'center', gap: '0.3rem'}}>
+                        {playingIndex === index ? <><Square size={14} fill="currentColor" /> Stop</> : <><Volume2 size={14} /> Dengarkan</>}
                       </button>
-                      <button onClick={(e) => captureScreenshot(e, index)} className="play-audio-btn">📸 Share</button>
+                      <button onClick={(e) => captureScreenshot(e, index)} className="play-audio-btn" style={{display: 'flex', alignItems: 'center', gap: '0.3rem'}}><Share2 size={14} /> Share</button>
                       
                       {/* Tampilkan tombol Regenerate hanya pada pesan bot terakhir */}
                       {index === messages.length - 1 && (
-                        <button onClick={regenerateLastMessage} className="play-audio-btn" style={{borderColor: 'var(--neon-pink)', color: 'var(--neon-pink)'}}>
-                          🔄 Regenerate
+                        <button onClick={regenerateLastMessage} className="play-audio-btn" style={{borderColor: 'var(--neon-pink)', color: 'var(--neon-pink)', display: 'flex', alignItems: 'center', gap: '0.3rem'}}>
+                          <RefreshCw size={14} /> Regenerate
                         </button>
                       )}
                     </div>
@@ -527,19 +528,19 @@ export default function Home() {
                   <>
                     <p>{msg.content}</p>
                     <div className="msg-actions" style={{justifyContent: 'flex-end', marginTop: '0.5rem'}}>
-                      <button onClick={() => handleEditMessage(index, msg.content)} className="play-audio-btn" style={{borderColor: 'rgba(255,255,255,0.2)', color: 'var(--text-secondary)'}}>
-                        ✏️ Edit
+                      <button onClick={() => handleEditMessage(index, msg.content)} className="play-audio-btn" style={{borderColor: 'rgba(255,255,255,0.2)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.3rem'}}>
+                        <Pencil size={14} /> Edit
                       </button>
                     </div>
                   </>
                 )}
               </div>
-              {msg.role === 'user' && <div className="msg-avatar">👤</div>}
+              {msg.role === 'user' && <div className="msg-avatar"><User size={24} /></div>}
             </div>
           ))}
           {isLoading && messages[messages.length - 1]?.role !== 'model' && (
             <div className="message-wrapper model">
-              <div className="msg-avatar">🤖</div>
+              <div className="msg-avatar"><Bot size={24} /></div>
               <div className="message model loading-indicator">
                 <span>.</span><span>.</span><span>.</span>
               </div>
@@ -550,7 +551,7 @@ export default function Home() {
         {selectedImage && (
           <div className="image-preview">
             <img src={selectedImage} alt="Preview" />
-            <button onClick={() => setSelectedImage(null)} className="clear-img-btn">✖</button>
+            <button onClick={() => setSelectedImage(null)} className="clear-img-btn"><X size={16} /></button>
           </div>
         )}
 
@@ -563,15 +564,18 @@ export default function Home() {
             style={{display: 'none'}} 
             disabled={cooldown > 0}
           />
-          <button type="button" onClick={() => fileInputRef.current.click()} className="mic-btn attach-btn" title="Kirim Foto" disabled={isLoading || cooldown > 0}>📎</button>
+          <button type="button" onClick={() => fileInputRef.current.click()} className="mic-btn attach-btn" title="Kirim Foto" disabled={isLoading || cooldown > 0} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+            <Paperclip size={20} />
+          </button>
           <button
             type="button"
             onClick={startListening}
             className={`mic-btn ${isListening ? 'recording' : ''}`}
             title="Bicara pake Mic"
             disabled={isLoading || cooldown > 0}
+            style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}
           >
-            {isListening ? '🔴' : '🎤'}
+            {isListening ? <Mic size={20} color="white" /> : <Mic size={20} />}
           </button>
           <input
             type="text"
@@ -581,11 +585,8 @@ export default function Home() {
             className="chat-input"
             disabled={isLoading || cooldown > 0}
           />
-          <button type="submit" className="send-btn" disabled={(!input.trim() && !selectedImage) || isLoading || cooldown > 0}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M22 2L11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+          <button type="submit" className="send-btn" disabled={(!input.trim() && !selectedImage) || isLoading || cooldown > 0} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+            <Send size={20} />
           </button>
         </form>
       </main>
