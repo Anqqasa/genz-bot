@@ -73,6 +73,9 @@ export default function Home() {
       const savedMoodFlag = localStorage.getItem('genz_has_selected_mood');
       if (savedMoodFlag) {
         setHasSelectedMood(true);
+      } else {
+        // Tandai bahwa user sudah pernah mengakses, jadi refresh selanjutnya tidak akan muncul
+        localStorage.setItem('genz_has_selected_mood', 'true');
       }
 
       if (authUser) {
