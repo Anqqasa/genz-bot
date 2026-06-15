@@ -568,13 +568,24 @@ export default function Home() {
           </div>
           
           <div className="toxicity-control">
-            <label>Mood: {toxicity === 1 ? '🟢 Chill' : toxicity === 2 ? '🟡 Sarkas' : '🔴 Savage'}</label>
+            <label style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+              <span>⚙️ Level Toxic:</span>
+              <strong style={{color: toxicity === 1 ? '#4ade80' : toxicity === 2 ? '#facc15' : 'var(--neon-pink)'}}>
+                {toxicity === 1 ? 'Chill' : toxicity === 2 ? 'Sarkas' : 'Savage'}
+              </strong>
+            </label>
             <input 
               type="range" min="1" max="3" 
               value={toxicity} 
               onChange={(e) => setToxicity(parseInt(e.target.value))}
               className="toxicity-slider"
+              title="Geser untuk mengubah level toxic"
             />
+            <div className="slider-marks" style={{display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '4px', padding: '0 5px'}}>
+              <span style={{cursor: 'pointer'}} onClick={() => setToxicity(1)}>Baik</span>
+              <span style={{cursor: 'pointer'}} onClick={() => setToxicity(2)}>Ngeselin</span>
+              <span style={{cursor: 'pointer'}} onClick={() => setToxicity(3)}>Maut</span>
+            </div>
           </div>
         </header>
 
