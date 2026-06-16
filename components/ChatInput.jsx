@@ -74,10 +74,6 @@ export default function ChatInput({
           <Paperclip size={20} />
         </button>
 
-        <button type="button" onClick={onOpenMemeGenerator} className="mic-btn attach-btn" title="Buat Meme" disabled={isLoading || cooldown > 0} style={{display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(139, 92, 246, 0.2)', borderColor: 'var(--neon-purple)', color: 'var(--neon-purple)'}}>
-          <ImageIcon size={20} />
-        </button>
-
         <button
           type="button"
           onClick={onStartListening}

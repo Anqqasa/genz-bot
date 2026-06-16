@@ -9,7 +9,6 @@ import ChatSidebar from '../components/ChatSidebar';
 import ChatBubble from '../components/ChatBubble';
 import ChatInput from '../components/ChatInput';
 import LoginModal from '../components/LoginModal';
-import MemeGenerator from '../components/MemeGenerator';
 import './page.css';
 
 export default function Home() {
@@ -32,7 +31,6 @@ export default function Home() {
   
   const [playingIndex, setPlayingIndex] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showMemeGenerator, setShowMemeGenerator] = useState(false);
 
   const messagesAreaRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -272,13 +270,6 @@ export default function Home() {
   return (
     <div className="app-layout">
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
-      
-      {showMemeGenerator && (
-        <MemeGenerator 
-          onClose={() => setShowMemeGenerator(false)} 
-          onSendMeme={(dataUrl) => setSelectedImage(dataUrl)} 
-        />
-      )}
 
       {!hasSelectedMood && (
         <div className="mood-modal-overlay">
@@ -363,7 +354,6 @@ export default function Home() {
           setSelectedImage={setSelectedImage}
           onSendMessage={() => sendMessage()}
           onStartListening={startListening}
-          onOpenMemeGenerator={() => setShowMemeGenerator(true)}
         />
       </main>
     </div>
