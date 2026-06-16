@@ -29,18 +29,31 @@ export function AppProvider({ children }) {
   };
 
   const saveState = async (newSessions, newMemory, newTheme) => {
-    if (authUser) {
-      const { error } = await supabase.from('cloud_saves').upsert({ 
-        user_id: authUser.id, 
-        sessions_data: newSessions,
-        memory_data: newMemory
-      });
-      if(error) console.error("Error nyimpen ke Cloud: ", error.message);
-    } else {
-      localStorage.setItem('genz-bot-sessions', JSON.stringify(newSessions));
-      localStorage.setItem('genz-bot-memory', JSON.stringify(newMemory));
-    }
+    // Selalu simpan di lokal sebagai backup
+    localStorage.setItem('genz-bot-sessions', JSON.stringify(newSessions));
+    localStorage.setItem('genz-bot-memory', JSON.stringify(newMemory));
     localStorage.setItem('genz_theme', newTheme);
+
+    if (authUser) {
+      try {
+        const { data } = await supabase.from('cloud_saves').select('id').eq('user_id', authUser.id).limit(1);
+        if (data && data.length > 0) {
+          await supabase.from('cloud_saves').update({ 
+            sessions_data: newSessions,
+            memory_data: newMemory,
+            updated_at: new Date().toISOString()
+          }).eq('id', data[0].id);
+        } else {
+          await supabase.from('cloud_saves').insert({ 
+            user_id: authUser.id, 
+            sessions_data: newSessions,
+            memory_data: newMemory
+          });
+        }
+      } catch (err) {
+        console.error("Error nyimpen ke Cloud: ", err.message);
+      }
+    }
   };
 
   const createNewSession = () => {
@@ -142,23 +155,30 @@ export function AppProvider({ children }) {
 
       if (authUser) {
         try {
-          const { data } = await supabase.from('cloud_saves').select('sessions_data, memory_data').eq('user_id', authUser.id).single();
-          if (data) {
-            if (data.sessions_data) loadedSessions = data.sessions_data;
-            if (data.memory_data) loadedMemory = data.memory_data;
+          const { data } = await supabase.from('cloud_saves')
+            .select('sessions_data, memory_data')
+            .eq('user_id', authUser.id)
+            .order('updated_at', { ascending: false })
+            .limit(1);
+            
+          if (data && data.length > 0) {
+            if (data[0].sessions_data) loadedSessions = data[0].sessions_data;
+            if (data[0].memory_data) loadedMemory = data[0].memory_data;
           } else {
             const localSaved = localStorage.getItem('genz-bot-sessions');
             const localMemory = localStorage.getItem('genz-bot-memory');
             if (localSaved) loadedSessions = JSON.parse(localSaved);
             if (localMemory) loadedMemory = JSON.parse(localMemory);
             
-            await supabase.from('cloud_saves').upsert({ 
-              user_id: authUser.id, 
-              sessions_data: loadedSessions,
-              memory_data: loadedMemory 
-            });
+            await saveState(loadedSessions, loadedMemory, savedTheme);
           }
-        } catch (e) { console.error('Gagal memuat data cloud', e); }
+        } catch (e) { 
+          console.error('Gagal memuat data cloud', e);
+          const localSaved = localStorage.getItem('genz-bot-sessions');
+          const localMemory = localStorage.getItem('genz-bot-memory');
+          if (localSaved) loadedSessions = JSON.parse(localSaved);
+          if (localMemory) loadedMemory = JSON.parse(localMemory);
+        }
       } else {
         const saved = localStorage.getItem('genz-bot-sessions');
         const savedMem = localStorage.getItem('genz-bot-memory');
