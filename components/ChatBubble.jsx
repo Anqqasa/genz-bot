@@ -45,43 +45,82 @@ export default function ChatBubble({
     displayContent = displayContent.replace(memeRegex, '').trim();
   }
 
+  // Parse Group Chat Tags
+  const subMessages = [];
+  const groupRegex = /\[(MOCI|GLITCH|KRAK)\]/gi;
+  if (msg.role === 'model' && groupRegex.test(displayContent)) {
+    let parts = displayContent.split(groupRegex);
+    let currentContent = parts[0].trim();
+    if (currentContent) {
+      subMessages.push({ name: 'moci', content: currentContent });
+    }
+    for (let i = 1; i < parts.length; i += 2) {
+      const name = parts[i].toLowerCase();
+      const content = (parts[i+1] || '').trim();
+      if (content) {
+         subMessages.push({ name, content });
+      }
+    }
+  } else {
+    subMessages.push({ name: 'moci', content: displayContent });
+  }
+
+  if (msg.role === 'model') {
+    return (
+      <div id={`msg-wrap-${index}`} style={{ display: 'flex', flexDirection: 'column', gap: subMessages.length > 1 ? '0.5rem' : '0', width: '100%' }}>
+        {subMessages.map((sub, idx) => {
+          const isSubLast = idx === subMessages.length - 1;
+          const isGroup = subMessages.length > 1;
+          return (
+            <div key={idx} className="message-wrapper model" style={{ marginBottom: isSubLast ? '0' : '0' }}>
+              <div className="msg-avatar" style={{ background: 'transparent', padding: 0, marginTop: isGroup ? '0.5rem' : '0' }}>
+                <Mascot toxicity={toxicity} size={isGroup ? 28 : 36} character={sub.name} />
+              </div>
+              <div className={`message model`} style={{ padding: isGroup ? '0.75rem 1rem' : '' }}>
+                {isGroup && (
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '4px', textTransform: 'uppercase', fontWeight: 'bold', letterSpacing: '1px' }}>
+                    {sub.name}
+                  </div>
+                )}
+                
+                <div className="markdown-body">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{sub.content || '...'}</ReactMarkdown>
+                </div>
+                
+                {isSubLast && memeData && (
+                  <AutoMeme memeId={memeData.id} topText={memeData.top} bottomText={memeData.bottom} />
+                )}
+                
+                {isSubLast && (
+                  <div className="msg-actions">
+                    <button onClick={() => onSpeak(displayContent, index)} className="play-audio-btn" style={{display: 'flex', alignItems: 'center', gap: '0.3rem'}}>
+                      {playingIndex === index ? <><Square size={14} fill="currentColor" /> Stop</> : <><Volume2 size={14} /> Dengarkan</>}
+                    </button>
+                    <button onClick={(e) => onCapture(e, index)} className="play-audio-btn" style={{display: 'flex', alignItems: 'center', gap: '0.3rem'}}>
+                      <Share2 size={14} /> Share
+                    </button>
+                    {isLast && (
+                      <button onClick={onRegenerate} className="play-audio-btn" style={{borderColor: 'var(--neon-pink)', color: 'var(--neon-pink)', display: 'flex', alignItems: 'center', gap: '0.3rem'}}>
+                        <RefreshCw size={14} /> Regenerate
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // USER MESSAGE
   return (
-    <div id={`msg-wrap-${index}`} className={`message-wrapper ${msg.role}`}>
-      {msg.role === 'model' && (
-        <div className="msg-avatar" style={{ background: 'transparent', padding: 0 }}>
-          <Mascot toxicity={toxicity} size={36} />
-        </div>
-      )}
-      
-      <div className={`message ${msg.role}`}>
+    <div id={`msg-wrap-${index}`} className="message-wrapper user">
+      <div className="message user">
         {msg.image && <img src={msg.image} alt="User Upload" className="uploaded-image" />}
         
-        {msg.role === 'model' ? (
-          <>
-            <div className="markdown-body">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayContent || '...'}</ReactMarkdown>
-            </div>
-            
-            {memeData && (
-              <AutoMeme memeId={memeData.id} topText={memeData.top} bottomText={memeData.bottom} />
-            )}
-            
-            <div className="msg-actions">
-              <button onClick={() => onSpeak(displayContent, index)} className="play-audio-btn" style={{display: 'flex', alignItems: 'center', gap: '0.3rem'}}>
-                {playingIndex === index ? <><Square size={14} fill="currentColor" /> Stop</> : <><Volume2 size={14} /> Dengarkan</>}
-              </button>
-              <button onClick={(e) => onCapture(e, index)} className="play-audio-btn" style={{display: 'flex', alignItems: 'center', gap: '0.3rem'}}>
-                <Share2 size={14} /> Share
-              </button>
-              
-              {isLast && (
-                <button onClick={onRegenerate} className="play-audio-btn" style={{borderColor: 'var(--neon-pink)', color: 'var(--neon-pink)', display: 'flex', alignItems: 'center', gap: '0.3rem'}}>
-                  <RefreshCw size={14} /> Regenerate
-                </button>
-              )}
-            </div>
-          </>
-        ) : isEditing ? (
+        {isEditing ? (
           <div className="edit-message-area" style={{display: 'flex', flexDirection: 'column', gap: '0.5rem'}}>
             <textarea 
               value={editText}
@@ -104,8 +143,7 @@ export default function ChatBubble({
           </>
         )}
       </div>
-      
-      {msg.role === 'user' && <div className="msg-avatar"><User size={24} /></div>}
+      <div className="msg-avatar"><User size={24} /></div>
     </div>
   );
 }

@@ -18,6 +18,7 @@ export default function Home() {
     sessions, setSessions, 
     isSidebarOpen, setIsSidebarOpen,
     toxicity, setToxicity,
+    chatMode,
     userMemory, setUserMemory,
     authUser, isAuthChecking,
     hasSelectedMood, setHasSelectedMood,
@@ -202,7 +203,7 @@ export default function Home() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: textToSend, history: currentMessages, image: imageToSend, toxicity, userMemory }),
+        body: JSON.stringify({ message: textToSend, history: currentMessages, image: imageToSend, toxicity, userMemory, chatMode }),
       });
 
       if (!res.ok) {

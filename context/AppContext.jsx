@@ -13,6 +13,7 @@ export function AppProvider({ children }) {
   
   const [theme, setTheme] = useState('cyberpunk');
   const [userMemory, setUserMemory] = useState([]); // Array of strings (facts)
+  const [chatMode, setChatMode] = useState('solo'); // 'solo' or 'group'
   
   // Auth & Cloud State
   const [authUser, setAuthUser] = useState(null);
@@ -152,6 +153,7 @@ export function AppProvider({ children }) {
     isSidebarOpen, setIsSidebarOpen,
     toxicity, setToxicity,
     theme, setTheme,
+    chatMode, setChatMode,
     userMemory, setUserMemory,
     authUser, isAuthChecking,
     hasSelectedMood, setHasSelectedMood,

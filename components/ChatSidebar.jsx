@@ -10,7 +10,8 @@ export default function ChatSidebar({ setShowLoginModal }) {
     activeSessionId, setActiveSessionId, 
     isSidebarOpen, setIsSidebarOpen,
     authUser, createNewSession, clearAllSessions,
-    theme, setTheme
+    theme, setTheme,
+    chatMode, setChatMode
   } = useAppContext();
 
   const loadSession = (id) => {
@@ -82,6 +83,14 @@ export default function ChatSidebar({ setShowLoginModal }) {
             <button onClick={() => setTheme('cyberpunk')} style={{flex: 1, padding: '0.3rem', borderRadius: '4px', background: theme === 'cyberpunk' ? 'var(--neon-cyan)' : 'transparent', color: theme === 'cyberpunk' ? '#000' : 'var(--text-primary)', border: '1px solid var(--neon-cyan)', fontSize: '0.75rem', cursor: 'pointer'}}>Neon</button>
             <button onClick={() => setTheme('y2k')} style={{flex: 1, padding: '0.3rem', borderRadius: '4px', background: theme === 'y2k' ? 'var(--neon-pink)' : 'transparent', color: theme === 'y2k' ? '#000' : 'var(--text-primary)', border: '1px solid var(--neon-pink)', fontSize: '0.75rem', cursor: 'pointer'}}>Y2K</button>
             <button onClick={() => setTheme('soft')} style={{flex: 1, padding: '0.3rem', borderRadius: '4px', background: theme === 'soft' ? 'var(--neon-purple)' : 'transparent', color: theme === 'soft' ? '#000' : 'var(--text-primary)', border: '1px solid var(--neon-purple)', fontSize: '0.75rem', cursor: 'pointer'}}>Soft</button>
+          </div>
+        </div>
+
+        <div style={{padding: '0 1rem', marginBottom: '1rem'}}>
+          <label style={{fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem'}}>💬 Mode Chat</label>
+          <div style={{display: 'flex', gap: '0.5rem'}}>
+            <button onClick={() => setChatMode('solo')} style={{flex: 1, padding: '0.3rem', borderRadius: '4px', background: chatMode === 'solo' ? 'var(--neon-cyan)' : 'transparent', color: chatMode === 'solo' ? '#000' : 'var(--text-primary)', border: `1px solid var(--neon-cyan)`, fontSize: '0.75rem', cursor: 'pointer'}}>1 vs 1</button>
+            <button onClick={() => setChatMode('group')} style={{flex: 1, padding: '0.3rem', borderRadius: '4px', background: chatMode === 'group' ? 'var(--neon-pink)' : 'transparent', color: chatMode === 'group' ? '#000' : 'var(--text-primary)', border: `1px solid var(--neon-pink)`, fontSize: '0.75rem', cursor: 'pointer'}}>Tongkrongan</button>
           </div>
         </div>
         
