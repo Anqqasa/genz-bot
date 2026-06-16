@@ -44,6 +44,16 @@ export default function RootLayout({ children }) {
                 window.addEventListener('load', function() {
                   navigator.serviceWorker.register('/sw.js').then(function(registration) {
                     console.log('SW registered: ', registration.scope);
+                    registration.onupdatefound = () => {
+                      const installingWorker = registration.installing;
+                      if (installingWorker == null) return;
+                      installingWorker.onstatechange = () => {
+                        if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                          console.log('New content is available; please refresh.');
+                          window.location.reload();
+                        }
+                      };
+                    };
                   }, function(err) {
                     console.log('SW registration failed: ', err);
                   });

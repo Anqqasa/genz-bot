@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sipaling-ai-v2';
+const CACHE_NAME = 'sipaling-ai-v3';
 
 // Daftar file yang ingin dicache
 const urlsToCache = [
