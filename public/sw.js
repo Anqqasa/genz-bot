@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sipaling-ai-v3';
+const CACHE_NAME = 'sipaling-ai-v4'; // FORCED UPDATE
 
 // Daftar file yang ingin dicache
 const urlsToCache = [

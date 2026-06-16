@@ -10,17 +10,24 @@ export default function BroadcastPopup() {
 
   useEffect(() => {
     if (broadcastMessage) {
-      // Cek apakah user sudah melihat pesan ini
-      const lastSeen = localStorage.getItem('last_seen_broadcast');
-      if (lastSeen !== broadcastMessage) {
-        setIsOpen(true);
+      try {
+        const lastSeen = localStorage.getItem('last_seen_broadcast');
+        if (lastSeen !== broadcastMessage) {
+          setIsOpen(true);
+        }
+      } catch (e) {
+        setIsOpen(true); // If localStorage fails, just show it anyway
       }
     }
   }, [broadcastMessage]);
 
   const handleClose = () => {
     setIsOpen(false);
-    localStorage.setItem('last_seen_broadcast', broadcastMessage);
+    try {
+      localStorage.setItem('last_seen_broadcast', broadcastMessage);
+    } catch (e) {
+      // Ignore
+    }
   };
 
   if (!isOpen || !broadcastMessage) return null;
