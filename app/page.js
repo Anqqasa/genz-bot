@@ -558,8 +558,8 @@ export default function Home() {
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    if (!loginUsername) { setLoginError('Username tidak boleh kosong!'); return; }
-    if (!loginPassword || loginPassword.length < 6) { setLoginError('Password minimal 6 karakter bos!'); return; }
+    if (!loginUsername) { setLoginError('Buset dah, isi dulu lah usernamenya ngab! Yakali kosong.'); return; }
+    if (!loginPassword || loginPassword.length < 6) { setLoginError('Password kekecilan bos, minimal 6 karakter lah! Emang password lu 12345?'); return; }
 
     setIsLoginLoading(true);
     setLoginError('');
@@ -574,14 +574,14 @@ export default function Home() {
       // Jika sudah terdaftar, lakukan Sign In
       const { error: signInError } = await supabase.auth.signInWithPassword({ email: dummyEmail, password: loginPassword });
       if (signInError) {
-        setLoginError("Gagal Login: " + signInError.message);
+        setLoginError("Yaelah ngab, password lu salah! Inget-inget lagi napa. Kalo lupa mending rebahan aja.");
       } else {
         setShowLoginModal(false);
         setLoginUsername('');
         setLoginPassword('');
       }
     } else if (error) {
-      setLoginError(error.message);
+      setLoginError("Waduh error ngab: " + error.message);
     } else {
       setShowLoginModal(false);
       setLoginUsername('');
@@ -858,6 +858,12 @@ export default function Home() {
             <Send size={20} />
           </button>
         </form>
+        {(!authUser || (!authUser.email?.includes('anqqasa'))) && (
+          <div style={{textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.6rem'}}>
+            Sisa limit lu hari ini: <strong>{Math.max(0, (authUser ? 30 : 10) - usageCount)}</strong> pesan.
+            {!authUser && " (Login gratis buat dapet 30 pesan/hari)"}
+          </div>
+        )}
       </main>
     </div>
   );
