@@ -6,10 +6,27 @@ import { Sparkles, MessageSquare, Flame, Cpu } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 export default function LandingPage() {
-  const { authUser, isAuthChecking } = useAppContext();
+  const { authUser, isAuthChecking, broadcastMessage } = useAppContext();
 
   return (
     <div className="landing-container">
+      {broadcastMessage && (
+        <div style={{
+          background: 'linear-gradient(45deg, #ef4444, #f97316)',
+          color: 'white',
+          padding: '10px 15px',
+          textAlign: 'center',
+          fontWeight: 'bold',
+          zIndex: 9999,
+          position: 'sticky',
+          top: 0,
+          left: 0,
+          right: 0,
+          boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)'
+        }}>
+          📢 {broadcastMessage}
+        </div>
+      )}
       <div className="landing-grid-bg"></div>
       
       <nav className="landing-nav">
