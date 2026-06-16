@@ -18,6 +18,7 @@ export default function Home() {
     sessions, setSessions, 
     isSidebarOpen, setIsSidebarOpen,
     toxicity, setToxicity,
+    userMemory, setUserMemory,
     authUser, isAuthChecking,
     hasSelectedMood, setHasSelectedMood,
     isInitialized
@@ -201,7 +202,7 @@ export default function Home() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: textToSend, history: currentMessages, image: imageToSend, toxicity }),
+        body: JSON.stringify({ message: textToSend, history: currentMessages, image: imageToSend, toxicity, userMemory }),
       });
 
       if (!res.ok) {
@@ -224,6 +225,29 @@ export default function Home() {
         const { value, done } = await reader.read();
         if (done) break;
         botResponse += decoder.decode(value, { stream: true });
+        setMessages(prev => {
+          const newMsgs = [...prev];
+          newMsgs[newMsgs.length - 1].content = botResponse;
+          return newMsgs;
+        });
+      }
+      
+      // Extract Long-Term Memory Facts after streaming completes
+      const factRegex = /\[FACT:\s*([^\]]+?)\]/gi;
+      let match;
+      let newFacts = [];
+      while ((match = factRegex.exec(botResponse)) !== null) {
+        newFacts.push(match[1].trim());
+      }
+      
+      if (newFacts.length > 0) {
+        setUserMemory(prev => {
+          const updated = [...prev];
+          newFacts.forEach(f => { if (!updated.includes(f)) updated.push(f); });
+          return updated;
+        });
+        // Remove the tags from the final message visually
+        botResponse = botResponse.replace(factRegex, '').trim();
         setMessages(prev => {
           const newMsgs = [...prev];
           newMsgs[newMsgs.length - 1].content = botResponse;

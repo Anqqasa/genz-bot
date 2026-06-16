@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
 
-:root {
+:root, [data-theme="cyberpunk"] {
   --bg-dark: #030305;
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
@@ -15,6 +15,31 @@
   --glass-bg-user: rgba(0, 242, 254, 0.08);
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-blur: blur(20px);
+}
+
+[data-theme="y2k"] {
+  --bg-dark: #12001a;
+  --text-primary: #ffd1ff;
+  --text-secondary: #ff88ff;
+  --neon-cyan: #00ffff;
+  --neon-pink: #ff007f;
+  --neon-purple: #aa00ff;
+  --glass-bg-bot: rgba(30, 0, 40, 0.6);
+  --glass-bg-user: rgba(255, 0, 255, 0.08);
+  --glass-border: rgba(255, 128, 255, 0.15);
+}
+
+[data-theme="soft"] {
+  --bg-dark: #2d2633;
+  --text-primary: #ffeeff;
+  --text-secondary: #d1b3d1;
+  --neon-cyan: #ffb3d9;
+  --neon-pink: #ff99cc;
+  --neon-purple: #d9b3ff;
+  --glass-bg-bot: rgba(60, 50, 70, 0.6);
+  --glass-bg-user: rgba(255, 179, 217, 0.15);
+  --glass-border: rgba(255, 200, 220, 0.2);
+}
   
   --radius-lg: 24px;
   --radius-md: 16px;

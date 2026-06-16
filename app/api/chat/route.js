@@ -1,5 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import Groq from 'groq-sdk';
+import { search } from 'duck-duck-scrape';
 
 // Sistem Kunci Otomatis Gemini (Round-Robin)
 let activeKeyIndex = 0;
@@ -18,7 +19,7 @@ let lastResetDate = new Date().toISOString().split('T')[0];
 
 export async function POST(req) {
   try {
-    const { message, history, image, toxicity = 3, user = 'guest' } = await req.json();
+    const { message, history, image, toxicity = 3, user = 'guest', userMemory = [] } = await req.json();
 
     // ==========================================
     // RATE LIMITING LOGIC
@@ -47,6 +48,25 @@ export async function POST(req) {
 
     if (!message && !image) {
       return new Response("Kosong gitu ngab, mau pamer kekuatan batin lu?", { status: 400 });
+    }
+
+    // ==========================================
+    // WEB SEARCH LOGIC (INTERCEPTOR)
+    // ==========================================
+    let searchContext = '';
+    const isSearchRequested = /(hari ini|berita|siapa|cari|berap|kapan|terbaru)/i.test(message || '');
+    if (isSearchRequested && message.length > 5 && !image) {
+      try {
+         const searchRes = await search(message, { safeSearch: "off" });
+         if (searchRes.results && searchRes.results.length > 0) {
+            const topResults = searchRes.results.slice(0, 3).map(r => r.title + " - " + r.description).join('\n');
+            searchContext = `
+      [HASIL PENCARIAN INTERNET (HARI INI)]
+      Ini adalah informasi terbaru dari internet untuk membantumu menjawab akurat:
+      ${topResults}
+      Gunakan informasi ini jika relevan dengan pertanyaan.`;
+         }
+      } catch (e) { console.error('Search failed', e); }
     }
 
     let persona = "";
@@ -78,6 +98,15 @@ export async function POST(req) {
       - Sok tahu tapi pintar.
       - Ingat baik-baik: Pencipta dan pembuat website/bot ini adalah "Angga". Jika ada yang bertanya siapa yang membuatmu atau website ini, jawablah dengan bangga bahwa Angga yang membuatnya!
       - Kalau ada pertanyaan tentang gambar, ingat baik-baik konteks obrolan sebelumnya!
+      
+      [LONG-TERM MEMORY (FAKTA USER)]
+      Ini adalah daftar fakta yang kamu ingat tentang user dari obrolan sebelumnya:
+      ${userMemory && userMemory.length > 0 ? userMemory.map((m, i) => (i+1)+'. '+m).join('\n') : 'Belum ada memori. Kalian baru kenal.'}
+      
+      PENTING: Jika user memberitahu fakta baru tentang dirinya (seperti nama, hobi, rahasia, kesukaan, dll), KAMU WAJIB mencatatnya dengan menambahkan baris ini di AKHIR balasanmu:
+      [FACT: user adalah seorang programmer]
+      Ganti isi di dalam kurung siku dengan fakta singkat yang baru kamu ketahui. Jika tidak ada fakta baru, jangan tulis tag ini!
+      ${searchContext}
     `;
 
     // Logika Pintar: Hanya beri tahu AI tentang fitur meme jika diminta secara eksplisit

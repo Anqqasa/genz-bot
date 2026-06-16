@@ -11,6 +11,9 @@ export function AppProvider({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [toxicity, setToxicity] = useState(2);
   
+  const [theme, setTheme] = useState('cyberpunk');
+  const [userMemory, setUserMemory] = useState([]); // Array of strings (facts)
+  
   // Auth & Cloud State
   const [authUser, setAuthUser] = useState(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
@@ -32,6 +35,14 @@ export function AppProvider({ children }) {
     setIsSidebarOpen(false);
   };
 
+  const clearAllSessions = () => {
+    const defaultNewId = Date.now().toString();
+    const newSession = { id: defaultNewId, title: 'Chat Baru', messages: [DEFAULT_MESSAGE] };
+    setSessions([newSession]);
+    setActiveSessionId(defaultNewId);
+    setIsSidebarOpen(false);
+  };
+
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -48,13 +59,22 @@ export function AppProvider({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Theme application
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
   useEffect(() => {
     if (isAuthChecking) return;
 
     const loadData = async () => {
       let loadedSessions = [];
-      const savedMoodFlag = localStorage.getItem('genz_has_selected_mood');
+      let loadedMemory = [];
       
+      const savedMoodFlag = localStorage.getItem('genz_has_selected_mood');
+      const savedTheme = localStorage.getItem('genz_theme') || 'cyberpunk';
+      setTheme(savedTheme);
+
       if (savedMoodFlag) {
         setHasSelectedMood(true);
       } else {
@@ -63,20 +83,28 @@ export function AppProvider({ children }) {
 
       if (authUser) {
         try {
-          const { data } = await supabase.from('cloud_saves').select('sessions_data').eq('user_id', authUser.id).single();
-          if (data && data.sessions_data) {
-            loadedSessions = data.sessions_data;
+          const { data } = await supabase.from('cloud_saves').select('sessions_data, memory_data').eq('user_id', authUser.id).single();
+          if (data) {
+            if (data.sessions_data) loadedSessions = data.sessions_data;
+            if (data.memory_data) loadedMemory = data.memory_data;
           } else {
             const localSaved = localStorage.getItem('genz-bot-sessions');
-            if (localSaved) {
-              loadedSessions = JSON.parse(localSaved);
-              await supabase.from('cloud_saves').upsert({ user_id: authUser.id, sessions_data: loadedSessions });
-            }
+            const localMemory = localStorage.getItem('genz-bot-memory');
+            if (localSaved) loadedSessions = JSON.parse(localSaved);
+            if (localMemory) loadedMemory = JSON.parse(localMemory);
+            
+            await supabase.from('cloud_saves').upsert({ 
+              user_id: authUser.id, 
+              sessions_data: loadedSessions,
+              memory_data: loadedMemory 
+            });
           }
         } catch (e) { console.error('Gagal memuat data cloud', e); }
       } else {
         const saved = localStorage.getItem('genz-bot-sessions');
+        const savedMem = localStorage.getItem('genz-bot-memory');
         if (saved) loadedSessions = JSON.parse(saved);
+        if (savedMem) loadedMemory = JSON.parse(savedMem);
       }
       
       if (loadedSessions.length > 0) {
@@ -86,6 +114,7 @@ export function AppProvider({ children }) {
         createNewSession();
       }
       
+      setUserMemory(loadedMemory);
       setIsInitialized(true);
       setIsInitialLoad(false);
     };
@@ -98,29 +127,36 @@ export function AppProvider({ children }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUser, isAuthChecking]);
 
-  // Sync sessions to Cloud or LocalStorage
+  // Sync sessions & memory to Cloud or LocalStorage
   useEffect(() => {
     if (!isInitialized || isInitialLoad) return;
     
     if (authUser) {
-      supabase.from('cloud_saves').upsert({ user_id: authUser.id, sessions_data: sessions })
-        .then(({error}) => { 
-          if(error) alert("Error nyimpen ke Cloud: " + error.message);
-        });
+      supabase.from('cloud_saves').upsert({ 
+        user_id: authUser.id, 
+        sessions_data: sessions,
+        memory_data: userMemory
+      }).then(({error}) => { 
+        if(error) console.error("Error nyimpen ke Cloud: ", error.message);
+      });
     } else {
       localStorage.setItem('genz-bot-sessions', JSON.stringify(sessions));
+      localStorage.setItem('genz-bot-memory', JSON.stringify(userMemory));
     }
-  }, [sessions, isInitialLoad, authUser, isInitialized]);
+    localStorage.setItem('genz_theme', theme);
+  }, [sessions, userMemory, theme, isInitialLoad, authUser, isInitialized]);
 
   const value = {
     sessions, setSessions,
     activeSessionId, setActiveSessionId,
     isSidebarOpen, setIsSidebarOpen,
     toxicity, setToxicity,
+    theme, setTheme,
+    userMemory, setUserMemory,
     authUser, isAuthChecking,
     hasSelectedMood, setHasSelectedMood,
     isInitialLoad, isInitialized,
-    createNewSession, DEFAULT_MESSAGE
+    createNewSession, clearAllSessions, DEFAULT_MESSAGE
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

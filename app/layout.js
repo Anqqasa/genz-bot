@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "SiPaling.AI - Savage AI",
-  description: "Chatbot AI paling Savage & Chill se-Indonesia",
+  title: "SiPaling.AI - Chatbot Gen-Z",
+  description: "Chatbot AI dengan bahasa gaul anak muda Indonesia, fitur voice, vision, dan auto-meme.",
+  manifest: "/manifest.json"
 };
 
 export const viewport = {
@@ -27,11 +28,30 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="id" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <head>
+        <meta name="theme-color" content="#8b5cf6" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+      </head>
       <body>
         <AppProvider>
           {children}
         </AppProvider>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                    console.log('SW registered: ', registration.scope);
+                  }, function(err) {
+                    console.log('SW registration failed: ', err);
+                  });
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );
