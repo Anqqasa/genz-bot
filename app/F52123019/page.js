@@ -208,8 +208,8 @@ INSERT INTO app_settings (id, value) VALUES ('broadcast', '');
             onChange={e => setBroadcastMsg(e.target.value)}
           ></textarea>
           
-          <div style={{display: 'flex', gap: '1rem'}}>
-            <button onClick={handleBroadcast} className="btn-action" style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+          <div className="admin-action-group">
+            <button onClick={handleBroadcast} className="btn-action" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center'}}>
               <ShieldCheck size={18}/> Siarkan Ke Semua
             </button>
             <button onClick={() => { setBroadcastMsg(''); setStatusMsg(''); fetch('/api/admin', { method: 'POST', headers: {'Authorization': `Bearer ${sessionToken}`, 'Content-Type': 'application/json'}, body: JSON.stringify({action: 'broadcast', payload: {message: ''}}) }).then(()=>setStatusMsg('Pengumuman dihapus!')) }} className="btn-action" style={{background: 'transparent', border: '1px solid #ef4444', color: '#ef4444'}}>
