@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState } from 'react';
 
 const MEME_MAP = {
-  'spongebob': '102156234', // Mocking Spongebob
-  'mikir': '89370399',      // Roll Safe / Think About It
-  'clown': '195515965',     // Putting on Clown Makeup
-  'dilema': '87743020',     // Two Buttons
-  'pablo': '101910402',     // Sad Pablo Escobar
-  'drake': '181913649',     // Drake Hotline Bling
-  'distracted': '112126428' // Distracted Boyfriend
+  'spongebob': 'https://i.imgflip.com/1otk96.jpg', // Mocking Spongebob
+  'mikir': 'https://i.imgflip.com/1h7in3.jpg',      // Roll Safe / Think About It
+  'clown': 'https://i.imgflip.com/38el31.jpg',     // Putting on Clown Makeup
+  'dilema': 'https://i.imgflip.com/1g8my4.jpg',     // Two Buttons
+  'pablo': 'https://i.imgflip.com/2fm6x.jpg',       // Waiting Skeleton
+  'drake': 'https://i.imgflip.com/30b1gx.jpg',     // Drake Hotline Bling
+  'distracted': 'https://i.imgflip.com/1ur9b0.jpg' // Distracted Boyfriend
 };
 
 export default function AutoMeme({ memeId, topText, bottomText }) {
@@ -17,8 +17,7 @@ export default function AutoMeme({ memeId, topText, bottomText }) {
   const [isError, setIsError] = useState(false);
 
   useEffect(() => {
-    const realId = MEME_MAP[memeId] || MEME_MAP['spongebob']; // Fallback
-    const url = `https://i.imgflip.com/${realId}.jpg`;
+    const url = MEME_MAP[memeId] || MEME_MAP['spongebob']; // Fallback directly to URL
     
     if (canvasRef.current) {
       const canvas = canvasRef.current;
