@@ -39,6 +39,7 @@ export default function Home() {
   const recognitionRef = useRef(null);
   const currentAudioRef = useRef(null);
   const shouldSpeakRef = useRef(false);
+  const messageSessionIdRef = useRef(activeSessionId);
 
   // Sinkronisasi messages jika session berubah
   useEffect(() => {
@@ -46,6 +47,7 @@ export default function Home() {
       const activeSession = sessions.find(s => s.id === activeSessionId);
       if (activeSession) {
         setMessages(activeSession.messages);
+        messageSessionIdRef.current = activeSessionId;
       }
     }
   }, [activeSessionId, sessions.length]);
@@ -53,6 +55,8 @@ export default function Home() {
   // Sinkronisasi messages ke global session state
   useEffect(() => {
     if (!isInitialized || !activeSessionId || messages.length === 0) return;
+    if (activeSessionId !== messageSessionIdRef.current) return; // FIX: Mencegah pesan lama nimpa sesi baru
+    
     setSessions(prev => prev.map(s => {
       if (s.id === activeSessionId) {
         let newTitle = s.title;
