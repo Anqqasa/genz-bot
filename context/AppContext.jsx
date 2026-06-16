@@ -84,21 +84,22 @@ export function AppProvider({ children }) {
     setSessions(prev => {
       updatedSessions = prev.map(s => {
         if (s.id === sessionId) {
-          let newTitle = s.title;
-          if (s.title === 'Chat Baru' || s.title.startsWith('Chat ')) {
-            const firstUserMsg = msgs.find(m => m.role === 'user');
-            if (firstUserMsg) {
-              const text = firstUserMsg.content || 'Gambar Meme';
-              newTitle = text.substring(0, 22) + (text.length > 22 ? '...' : '');
-            }
-          }
-          return { ...s, messages: msgs, title: newTitle };
+          return { ...s, messages: msgs };
         }
         return s;
       });
       return updatedSessions;
     });
     // Panggil saveState async
+    setTimeout(() => saveState(updatedSessions, userMemory, theme), 100);
+  };
+
+  const updateSessionTitle = (sessionId, newTitle) => {
+    let updatedSessions = [];
+    setSessions(prev => {
+      updatedSessions = prev.map(s => s.id === sessionId ? { ...s, title: newTitle } : s);
+      return updatedSessions;
+    });
     setTimeout(() => saveState(updatedSessions, userMemory, theme), 100);
   };
 
@@ -217,7 +218,7 @@ export function AppProvider({ children }) {
     authUser, isAuthChecking,
     hasSelectedMood, setHasSelectedMood,
     isInitialLoad, isInitialized,
-    createNewSession, clearAllSessions, updateSessionMessages, deleteSessionById, DEFAULT_MESSAGE
+    createNewSession, clearAllSessions, updateSessionMessages, updateSessionTitle, deleteSessionById, DEFAULT_MESSAGE
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

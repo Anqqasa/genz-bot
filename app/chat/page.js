@@ -22,7 +22,8 @@ export default function Home() {
     authUser, isAuthChecking,
     hasSelectedMood, setHasSelectedMood,
     isInitialized,
-    updateSessionMessages
+    updateSessionMessages,
+    updateSessionTitle
   } = useAppContext();
 
   const [messages, setMessages] = useState([]);
@@ -251,6 +252,22 @@ export default function Home() {
       // Simpan final state ke session global!
       const finalAllMessages = [...messagesWithUser, { role: 'model', content: finalBotResponse }];
       syncSession(finalAllMessages);
+      
+      // Jika ini adalah balasan pertama bot (total 3 pesan: greeting, pesan user, balasan bot)
+      // Minta AI membuat judul singkat dari percakapan ini secara background
+      if (finalAllMessages.length === 3) {
+        fetch('/api/title', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ history: finalAllMessages })
+        })
+        .then(r => r.text())
+        .then(newTitle => {
+           if (newTitle && newTitle !== "Chat Baru") {
+              updateSessionTitle(activeSessionId, newTitle);
+           }
+        }).catch(e => console.error("Gagal generate judul", e));
+      }
       
       if (shouldSpeakRef.current) speakText(finalBotResponse);
     } catch (error) {
