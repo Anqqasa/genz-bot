@@ -81,7 +81,7 @@ export async function POST(req) {
     `;
 
     // Logika Pintar: Hanya beri tahu AI tentang fitur meme jika diminta secara eksplisit
-    const isMemeRequested = /(meme|mimi|mim|gambar|ngakak|lucu|roast|ejek)/i.test(message || '');
+    const isMemeRequested = /\bmeme\b/i.test(message || '');
 
     if (isMemeRequested) {
       systemInstruction += `
