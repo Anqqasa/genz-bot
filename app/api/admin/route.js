@@ -60,7 +60,7 @@ export async function POST(req) {
 export async function GET(req) {
    // API Public untuk mengambil pengumuman
    try {
-      const { data, error } = await supabase.from('app_settings').select('value').eq('id', 'broadcast').single();
+      const { data, error } = await supabaseAdmin.from('app_settings').select('value').eq('id', 'broadcast').single();
       if (error || !data) return new Response(JSON.stringify({ message: '' }), { status: 200 });
       return new Response(JSON.stringify({ message: data.value }), { status: 200 });
    } catch (e) {
