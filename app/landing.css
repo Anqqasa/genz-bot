@@ -260,16 +260,31 @@
     height: 100dvh; 
     overflow-y: auto; 
     overflow-x: hidden; 
+    display: block;
   }
   .landing-main {
+    display: flex;
+    flex-direction: column;
     justify-content: flex-start;
-    padding-top: 2rem;
+    padding: 2rem 1rem;
+    height: auto;
   }
-  .landing-content { flex-direction: column; text-align: center; }
+  .landing-content { 
+    flex-direction: column; 
+    text-align: center; 
+    height: auto;
+    gap: 1rem;
+  }
   .hero-section { text-align: center; }
-  .cta-area { justify-content: center; }
-  .features-grid-compact { grid-template-columns: 1fr; }
-  .mascot-showcase { height: 150px; margin-top: 1rem; transform: scale(0.8); }
-  .glitch-float { left: -10px; }
-  .krak-float { right: -10px; }
+  .cta-area { justify-content: center; flex-wrap: wrap; }
+  .features-grid-compact { grid-template-columns: 1fr; margin-top: 2rem; }
+  .mascot-showcase { 
+    height: 220px; 
+    min-height: 220px;
+    margin-top: 2rem; 
+    transform: scale(0.8); 
+    flex: none;
+  }
+  .glitch-float { left: -20px; }
+  .krak-float { right: -20px; }
 }
