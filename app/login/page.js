@@ -12,11 +12,13 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setErrorMsg('');
+    setSuccessMsg('');
     if (!email || !password) return setErrorMsg('Email dan Password wajib diisi bos!');
     
     setIsLoading(true);
@@ -33,18 +35,22 @@ export default function LoginPage() {
   const handleRegister = async (e) => {
     e.preventDefault();
     setErrorMsg('');
+    setSuccessMsg('');
     if (!email || !password) return setErrorMsg('Email dan Password wajib diisi bos!');
     if (password.length < 6) return setErrorMsg('Password minimal 6 karakter!');
 
     setIsLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ email, password });
     setIsLoading(false);
 
     if (error) {
       setErrorMsg("Gagal Daftar: " + error.message);
     } else {
-      // Supabase auto-logs in on successful signup if email confirmation is disabled
-      router.push('/chat');
+      if (data?.session === null || data?.user?.identities?.length === 0) {
+        setSuccessMsg('Akun berhasil dibuat! Cek INBOX/SPAM email lu sekarang buat klik link verifikasi.');
+      } else {
+        router.push('/chat');
+      }
     }
   };
 
@@ -78,7 +84,7 @@ export default function LoginPage() {
 
         {mode === 'login' && (
           <div className="form-mode">
-            <button onClick={() => {setMode('select'); setErrorMsg('');}} className="back-btn">
+            <button onClick={() => {setMode('select'); setErrorMsg(''); setSuccessMsg('');}} className="back-btn">
               <ArrowLeft size={16} /> Kembali
             </button>
             <div className="login-header small">
@@ -112,7 +118,7 @@ export default function LoginPage() {
 
         {mode === 'register' && (
           <div className="form-mode">
-            <button onClick={() => {setMode('select'); setErrorMsg('');}} className="back-btn">
+            <button onClick={() => {setMode('select'); setErrorMsg(''); setSuccessMsg('');}} className="back-btn">
               <ArrowLeft size={16} /> Kembali
             </button>
             <div className="login-header small">
@@ -137,6 +143,9 @@ export default function LoginPage() {
                 className="auth-input"
               />
               {errorMsg && <div className="error-msg"><AlertCircle size={16}/> {errorMsg}</div>}
+              {successMsg && <div className="success-msg" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#4ade80', fontSize: '0.85rem', background: 'rgba(74, 222, 128, 0.1)', padding: '0.8rem', borderRadius: '8px', textAlign: 'left'}}>
+                ✅ {successMsg}
+              </div>}
               <button type="submit" className="submit-btn register" disabled={isLoading}>
                 {isLoading ? 'Mendaftarkan...' : 'Daftar Sekarang'}
               </button>
