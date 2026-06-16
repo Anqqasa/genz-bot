@@ -256,7 +256,11 @@
 }
 
 @media (max-width: 768px) {
-  .landing-container { height: auto; overflow: visible; }
+  .landing-container { 
+    height: 100dvh; 
+    overflow-y: auto; 
+    overflow-x: hidden; 
+  }
   .landing-content { flex-direction: column; text-align: center; }
   .hero-section { text-align: center; }
   .cta-area { justify-content: center; }
