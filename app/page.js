@@ -1,404 +1,71 @@
 'use client';
-
-import { useState, useRef, useEffect } from 'react';
-import { Bot, Menu, Cloud, Smile, Meh, Flame } from 'lucide-react';
-import html2canvas from 'html2canvas';
-
-import { useAppContext } from '../context/AppContext';
-import ChatSidebar from '../components/ChatSidebar';
-import ChatBubble from '../components/ChatBubble';
-import ChatInput from '../components/ChatInput';
-import LoginModal from '../components/LoginModal';
+import Link from 'next/link';
 import Mascot from '../components/Mascot';
-import './page.css';
+import './landing.css';
+import { Sparkles, MessageSquare, Flame, Cpu } from 'lucide-react';
 
-export default function Home() {
-  const { 
-    activeSessionId, 
-    sessions, setSessions, 
-    isSidebarOpen, setIsSidebarOpen,
-    toxicity, setToxicity,
-    chatMode,
-    userMemory, setUserMemory,
-    authUser, isAuthChecking,
-    hasSelectedMood, setHasSelectedMood,
-    isInitialized
-  } = useAppContext();
-
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const [cooldown, setCooldown] = useState(0);
-  const [selectedImage, setSelectedImage] = useState(null);
-  
-  const [playingIndex, setPlayingIndex] = useState(null);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-
-  const messagesAreaRef = useRef(null);
-  const recognitionRef = useRef(null);
-  const currentAudioRef = useRef(null);
-  const shouldSpeakRef = useRef(false);
-  const messageSessionIdRef = useRef(activeSessionId);
-
-  // Sinkronisasi messages jika session berubah
-  useEffect(() => {
-    if (activeSessionId) {
-      const activeSession = sessions.find(s => s.id === activeSessionId);
-      if (activeSession) {
-        setMessages(activeSession.messages);
-      }
-    }
-  }, [activeSessionId, sessions.length]);
-
-  // Efek Timer Cooldown
-  useEffect(() => {
-    let timer;
-    if (cooldown > 0) {
-      timer = setInterval(() => setCooldown(prev => prev - 1), 1000);
-    }
-    return () => clearInterval(timer);
-  }, [cooldown]);
-
-  const scrollToBottom = () => {
-    if (messagesAreaRef.current) {
-      messagesAreaRef.current.scrollTo({ top: messagesAreaRef.current.scrollHeight, behavior: 'smooth' });
-    }
-  };
-
-  const speakText = (text, msgIndex) => {
-    if (playingIndex === msgIndex && currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current = null;
-      setPlayingIndex(null);
-      return;
-    }
-
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current = null;
-    }
-
-    setPlayingIndex(msgIndex);
-    const cleanText = text.replace(/[*#_`~]/g, '').trim();
-    if (!cleanText) { setPlayingIndex(null); return; }
-
-    const words = cleanText.split(' ');
-    const chunks = [];
-    let currentChunk = '';
-    for (let i = 0; i < words.length; i++) {
-      if ((currentChunk + ' ' + words[i]).length > 180) {
-        chunks.push(currentChunk.trim());
-        currentChunk = words[i];
-      } else {
-        currentChunk += (currentChunk ? ' ' : '') + words[i];
-      }
-    }
-    if (currentChunk) chunks.push(currentChunk.trim());
-
-    let currentChunkIndex = 0;
-    const playNext = () => {
-      if (playingIndex !== null && playingIndex !== msgIndex) return;
-      if (currentChunkIndex >= chunks.length) {
-        currentAudioRef.current = null;
-        setPlayingIndex(null);
-        return;
-      }
-      
-      const chunk = chunks[currentChunkIndex];
-      const url = `/api/tts?text=${encodeURIComponent(chunk)}`;
-      const audio = new Audio(url);
-      audio.playbackRate = 1.3;
-      currentAudioRef.current = audio;
-      audio.onended = () => { currentChunkIndex++; playNext(); };
-      audio.onerror = () => { currentChunkIndex++; playNext(); };
-      audio.play().catch(e => console.error(e));
-    };
-
-    playNext();
-  };
-
-  const captureScreenshot = async (e, msgIndex) => {
-    e.target.innerText = '📸 Loading...';
-    const chatElement = document.getElementById(`msg-wrap-${msgIndex}`);
-    if (chatElement) {
-      try {
-        const canvas = await html2canvas(chatElement, { backgroundColor: '#030305', scale: 2 });
-        const link = document.createElement('a');
-        link.download = `genz-roast-${Date.now()}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      } catch (err) {
-        alert("Gagal ngambil screenshot ngab.");
-      }
-    }
-    e.target.innerText = '📸 Share';
-  };
-
-  const startListening = () => {
-    if (isListening && recognitionRef.current) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-      return;
-    }
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert("Browser lu ga support fitur mic dek.");
-      return;
-    }
-    const recognition = new SpeechRecognition();
-    recognitionRef.current = recognition;
-    recognition.lang = 'id-ID';
-    recognition.interimResults = false;
-    
-    recognition.onstart = () => setIsListening(true);
-    recognition.onresult = (event) => {
-      setInput(event.results[0][0].transcript);
-      shouldSpeakRef.current = true;
-    };
-    recognition.onerror = () => setIsListening(false);
-    recognition.onend = () => setIsListening(false);
-    recognition.start();
-  };
-
-  const syncSession = (msgs) => {
-    setSessions(prev => prev.map(s => {
-      if (s.id === activeSessionId) {
-        let newTitle = s.title;
-        if (s.title === 'Chat Baru' || s.title.startsWith('Chat ')) {
-          const firstUserMsg = msgs.find(m => m.role === 'user');
-          if (firstUserMsg) {
-            const text = firstUserMsg.content || 'Gambar Meme';
-            newTitle = text.substring(0, 22) + (text.length > 22 ? '...' : '');
-          }
-        }
-        return { ...s, messages: msgs, title: newTitle };
-      }
-      return s;
-    }));
-  };
-
-  const sendMessage = async (customText = null, customImage = null, overrideMessages = null) => {
-    const textToSend = customText !== null ? customText : input;
-    const imageToSend = customImage !== null ? customImage : selectedImage;
-    
-    if (!textToSend.trim() && !imageToSend) return;
-
-    const currentMessages = overrideMessages !== null ? overrideMessages : messages;
-    const newUserMessage = { role: 'user', content: textToSend, image: imageToSend };
-    
-    const messagesWithUser = [...currentMessages, newUserMessage];
-    setMessages(messagesWithUser);
-    syncSession(messagesWithUser);
-    setTimeout(scrollToBottom, 100);
-    
-    if (customText === null) {
-      setInput('');
-      setSelectedImage(null);
-    }
-    setIsLoading(true);
-    setMessages((prev) => [...prev, { role: 'model', content: '' }]);
-    setTimeout(scrollToBottom, 100);
-
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: textToSend, history: currentMessages, image: imageToSend, toxicity, userMemory, chatMode }),
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        setMessages((prev) => {
-          const updated = [...prev];
-          updated[updated.length - 1] = { role: 'model', content: errorText };
-          syncSession(updated);
-          return updated;
-        });
-        setIsLoading(false);
-        if (errorText.includes('MENIT') || errorText.includes('kecepetan')) setCooldown(35);
-        return;
-      }
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let botResponse = '';
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        botResponse += decoder.decode(value, { stream: true });
-        setMessages(prev => {
-          const newMsgs = [...prev];
-          newMsgs[newMsgs.length - 1].content = botResponse;
-          return newMsgs;
-        });
-        scrollToBottom();
-      }
-      
-      // Extract Long-Term Memory Facts after streaming completes
-      const factRegex = /\[FACT:\s*([^\]]+?)\]/gi;
-      let match;
-      let newFacts = [];
-      while ((match = factRegex.exec(botResponse)) !== null) {
-        newFacts.push(match[1].trim());
-      }
-      
-      let finalBotResponse = botResponse;
-      if (newFacts.length > 0) {
-        setUserMemory(prev => {
-          const updated = [...prev];
-          newFacts.forEach(f => { if (!updated.includes(f)) updated.push(f); });
-          return updated;
-        });
-        // Remove the tags from the final message visually
-        finalBotResponse = botResponse.replace(factRegex, '').trim();
-        setMessages(prev => {
-          const newMsgs = [...prev];
-          newMsgs[newMsgs.length - 1].content = finalBotResponse;
-          return newMsgs;
-        });
-      }
-      
-      // Simpan final state ke session global!
-      const finalAllMessages = [...messagesWithUser, { role: 'model', content: finalBotResponse }];
-      syncSession(finalAllMessages);
-      
-      if (shouldSpeakRef.current) speakText(finalBotResponse);
-    } catch (error) {
-      setMessages(prev => {
-        const newArray = [...prev];
-        newArray[newArray.length - 1].content += ' (Error API, coba lagi ngab)';
-        syncSession(newArray);
-        return newArray;
-      });
-    } finally {
-      setIsLoading(false);
-      shouldSpeakRef.current = false;
-    }
-  };
-
-  const handleEditSubmit = (index, newText, oldImage) => {
-    const historyBeforeEdit = messages.slice(0, index);
-    sendMessage(newText, oldImage, historyBeforeEdit);
-  };
-
-  const regenerateLastMessage = () => {
-    if (messages.length < 2) return;
-    let lastUserIndex = messages.length - 1;
-    while (lastUserIndex >= 0 && messages[lastUserIndex].role !== 'user') lastUserIndex--;
-    if (lastUserIndex === -1) return;
-    
-    const lastUserMsg = messages[lastUserIndex];
-    const historyBeforeLastUser = messages.slice(0, lastUserIndex);
-    sendMessage(lastUserMsg.content, lastUserMsg.image, historyBeforeLastUser);
-  };
-
-  if (isAuthChecking || !isInitialized) {
-    return (
-      <div style={{height: '100dvh', width: '100vw', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#030305', color: 'var(--neon-cyan)', fontFamily: 'var(--font-main)'}}>
-        <div className="loading-indicator"><span>.</span><span>.</span><span>.</span></div>
-      </div>
-    );
-  }
-
+export default function LandingPage() {
   return (
-    <div className="app-layout">
-      {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
+    <div className="landing-container">
+      <div className="landing-grid-bg"></div>
+      
+      <nav className="landing-nav">
+        <div className="logo-area">
+          <Mascot size={40} toxicity={3} character="moci" />
+          <span className="logo-text">SiPaling.AI</span>
+        </div>
+      </nav>
 
-      {!hasSelectedMood && (
-        <div className="mood-modal-overlay">
-          <div className="mood-modal-content">
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
-              <Mascot toxicity={toxicity} size={80} />
-            </div>
-            <h2 style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}>Pilih Vibe Bot Hari Ini</h2>
-            <p>Seberapa pedas kata-katanya yang lu siap terima?</p>
-            <div className="mood-options">
-              <button onClick={() => {setToxicity(1); setHasSelectedMood(true); localStorage.setItem('genz_has_selected_mood', 'true');}} className="mood-btn chill" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center'}}><Smile size={18} /> Chill (Sopan)</button>
-              <button onClick={() => {setToxicity(2); setHasSelectedMood(true); localStorage.setItem('genz_has_selected_mood', 'true');}} className="mood-btn sarkas" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center'}}><Meh size={18} /> Sarkas (Ngeselin)</button>
-              <button onClick={() => {setToxicity(3); setHasSelectedMood(true); localStorage.setItem('genz_has_selected_mood', 'true');}} className="mood-btn savage" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center'}}><Flame size={18} /> Savage (Mental Aman?)</button>
-            </div>
+      <main className="landing-main">
+        <div className="hero-section">
+          <div className="badge">✨ Bukan AI Biasa</div>
+          <h1 className="hero-title">
+            Siap-Siap Kena Mental <br/> <span className="gradient-text">Breakdance</span>
+          </h1>
+          <p className="hero-subtitle">
+            Chatbot dengan bahasa gaul Indonesia yang nggak ada filter. Fitur roasting brutal, mode tongkrongan 3 AI, dan generator meme otomatis!
+          </p>
+          <div className="cta-area">
+            <Link href="/chat" className="cta-button primary">
+              <Flame size={20}/> Mulai Uji Nyali
+            </Link>
+            <a href="#features" className="cta-button secondary">
+              Lihat Fitur
+            </a>
           </div>
         </div>
-      )}
 
-      <ChatSidebar setShowLoginModal={setShowLoginModal} />
-
-      <main className="chat-container">
-        <header className="chat-header">
-          <button onClick={() => setIsSidebarOpen(true)} className="menu-btn"><Menu size={24} /></button>
-          <div className="header-info">
-            <div className="avatar" style={{ background: 'transparent', padding: 0 }}>
-              <Mascot toxicity={toxicity} size={48} />
-            </div>
-            <div>
-              <h1 className="bot-name">SiPaling.AI</h1>
-              <span className="status"><span className="status-dot"></span> Online and Ready to Roast</span>
-            </div>
-          </div>
-          
-          <div className="toxicity-control">
-            <label style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-              <span>⚙️ Level Toxic:</span>
-              <strong style={{color: toxicity === 1 ? '#4ade80' : toxicity === 2 ? '#facc15' : 'var(--neon-pink)'}}>
-                {toxicity === 1 ? 'Chill' : toxicity === 2 ? 'Sarkas' : 'Savage'}
-              </strong>
-            </label>
-            <input 
-              type="range" min="1" max="3" 
-              value={toxicity} 
-              onChange={(e) => setToxicity(parseInt(e.target.value))}
-              className="toxicity-slider"
-              title="Geser untuk mengubah level toxic"
-            />
-          </div>
-          {authUser && (
-            <div className="auth-badge" style={{display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: 'var(--neon-purple)', background: 'rgba(139,92,246,0.1)', padding: '0.4rem 0.8rem', borderRadius: 'var(--radius-full)', border: '1px solid rgba(139,92,246,0.3)', marginLeft: '1rem'}} title="Cloud Sync Aktif">
-              <Cloud size={16} /> <b>{authUser.email}</b>
-            </div>
-          )}
-        </header>
-
-        <div className="messages-area" ref={messagesAreaRef}>
-          {messages.map((msg, index) => (
-            <ChatBubble 
-              key={index} 
-              msg={msg} 
-              index={index} 
-              isLast={index === messages.length - 1}
-              playingIndex={playingIndex}
-              onSpeak={speakText}
-              onCapture={captureScreenshot}
-              onRegenerate={regenerateLastMessage}
-              onEditSubmit={handleEditSubmit}
-              toxicity={toxicity}
-            />
-          ))}
-          {isLoading && messages[messages.length - 1]?.role !== 'model' && (
-            <div className="message-wrapper model">
-              <div className="msg-avatar" style={{ background: 'transparent', padding: 0 }}>
-                <Mascot toxicity={toxicity} size={36} />
-              </div>
-              <div className="message model loading-indicator">
-                <span>.</span><span>.</span><span>.</span>
-              </div>
-            </div>
-          )}
+        <div className="mascot-showcase">
+          <div className="mascot-float moci-float"><Mascot size={180} toxicity={3} character="moci" /></div>
+          <div className="mascot-float glitch-float"><Mascot size={140} toxicity={3} character="glitch" /></div>
+          <div className="mascot-float krak-float"><Mascot size={120} toxicity={3} character="krak" /></div>
         </div>
-
-        <ChatInput 
-          input={input}
-          setInput={setInput}
-          isLoading={isLoading}
-          isListening={isListening}
-          cooldown={cooldown}
-          selectedImage={selectedImage}
-          setSelectedImage={setSelectedImage}
-          onSendMessage={() => sendMessage()}
-          onStartListening={startListening}
-        />
       </main>
+
+      <section id="features" className="features-section">
+        <h2 className="section-title">Fitur Andalan</h2>
+        <div className="features-grid">
+          <div className="feature-card glass">
+            <div className="feature-icon"><MessageSquare size={32}/></div>
+            <h3>Mode Tongkrongan</h3>
+            <p>Dikeroyok 3 AI (Moci, Glitch, Krak) sekaligus dalam satu grup. Siap-siap disahutin pakai bacotan beruntun!</p>
+          </div>
+          <div className="feature-card glass">
+            <div className="feature-icon"><Sparkles size={32}/></div>
+            <h3>Auto-Meme Generator</h3>
+            <p>AI ini ngerti konteks dan bisa balas chat lu pake meme visual secara otomatis. Nggak cuma teks doang!</p>
+          </div>
+          <div className="feature-card glass">
+            <div className="feature-icon"><Cpu size={32}/></div>
+            <h3>Long-term Memory</h3>
+            <p>Dia inget aib lu. Fakta-fakta tentang lu bakal disimpan dan dipakai buat nge-roast lu di chat berikutnya.</p>
+          </div>
+        </div>
+      </section>
+
+      <footer className="landing-footer">
+        <p>© {new Date().getFullYear()} SiPaling.AI - Dibuat untuk Gen-Z yang mentalnya aman.</p>
+      </footer>
     </div>
   );
 }
