@@ -21,7 +21,8 @@ export default function Home() {
     userMemory, setUserMemory,
     authUser, isAuthChecking,
     hasSelectedMood, setHasSelectedMood,
-    isInitialized
+    isInitialized,
+    updateSessionMessages
   } = useAppContext();
 
   const [messages, setMessages] = useState([]);
@@ -160,20 +161,9 @@ export default function Home() {
   };
 
   const syncSession = (msgs) => {
-    setSessions(prev => prev.map(s => {
-      if (s.id === activeSessionId) {
-        let newTitle = s.title;
-        if (s.title === 'Chat Baru' || s.title.startsWith('Chat ')) {
-          const firstUserMsg = msgs.find(m => m.role === 'user');
-          if (firstUserMsg) {
-            const text = firstUserMsg.content || 'Gambar Meme';
-            newTitle = text.substring(0, 22) + (text.length > 22 ? '...' : '');
-          }
-        }
-        return { ...s, messages: msgs, title: newTitle };
-      }
-      return s;
-    }));
+    if (activeSessionId) {
+      updateSessionMessages(activeSessionId, msgs);
+    }
   };
 
   const sendMessage = async (customText = null, customImage = null, overrideMessages = null) => {

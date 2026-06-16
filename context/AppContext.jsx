@@ -28,20 +28,78 @@ export function AppProvider({ children }) {
     content: 'Sup? Gua AI lu yang paling skibidi. Ada yang mau ditanya atau mau adu mekanik aja?' 
   };
 
+  const saveState = async (newSessions, newMemory, newTheme) => {
+    if (authUser) {
+      const { error } = await supabase.from('cloud_saves').upsert({ 
+        user_id: authUser.id, 
+        sessions_data: newSessions,
+        memory_data: newMemory
+      });
+      if(error) console.error("Error nyimpen ke Cloud: ", error.message);
+    } else {
+      localStorage.setItem('genz-bot-sessions', JSON.stringify(newSessions));
+      localStorage.setItem('genz-bot-memory', JSON.stringify(newMemory));
+    }
+    localStorage.setItem('genz_theme', newTheme);
+  };
+
   const createNewSession = () => {
     const newId = Date.now().toString();
     const newSession = { id: newId, title: `Chat ${new Date().toLocaleTimeString()}`, messages: [DEFAULT_MESSAGE] };
-    setSessions(prev => [newSession, ...prev]);
+    const updatedSessions = [newSession, ...sessions];
+    setSessions(updatedSessions);
     setActiveSessionId(newId);
     setIsSidebarOpen(false);
+    saveState(updatedSessions, userMemory, theme);
   };
 
-  const clearAllSessions = () => {
+  const clearAllSessions = async () => {
     const defaultNewId = Date.now().toString();
     const newSession = { id: defaultNewId, title: 'Chat Baru', messages: [DEFAULT_MESSAGE] };
-    setSessions([newSession]);
+    const newSessions = [newSession];
+    setSessions(newSessions);
     setActiveSessionId(defaultNewId);
     setIsSidebarOpen(false);
+    
+    // Langsung hapus userMemory juga biar benar-benar bersih
+    setUserMemory([]);
+    await saveState(newSessions, [], theme);
+  };
+
+  const updateSessionMessages = (sessionId, msgs) => {
+    let updatedSessions = [];
+    setSessions(prev => {
+      updatedSessions = prev.map(s => {
+        if (s.id === sessionId) {
+          let newTitle = s.title;
+          if (s.title === 'Chat Baru' || s.title.startsWith('Chat ')) {
+            const firstUserMsg = msgs.find(m => m.role === 'user');
+            if (firstUserMsg) {
+              const text = firstUserMsg.content || 'Gambar Meme';
+              newTitle = text.substring(0, 22) + (text.length > 22 ? '...' : '');
+            }
+          }
+          return { ...s, messages: msgs, title: newTitle };
+        }
+        return s;
+      });
+      return updatedSessions;
+    });
+    // Panggil saveState async
+    setTimeout(() => saveState(updatedSessions, userMemory, theme), 100);
+  };
+
+  const deleteSessionById = (id) => {
+    let newSessions = sessions.filter(s => s.id !== id);
+    if (newSessions.length === 0) {
+       const newId = Date.now().toString();
+       newSessions = [{ id: newId, title: 'Chat Baru', messages: [DEFAULT_MESSAGE] }];
+    }
+    setSessions(newSessions);
+    if (activeSessionId === id) {
+      setActiveSessionId(newSessions[0].id);
+    }
+    saveState(newSessions, userMemory, theme);
   };
 
   useEffect(() => {
@@ -128,25 +186,6 @@ export function AppProvider({ children }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUser, isAuthChecking]);
 
-  // Sync sessions & memory to Cloud or LocalStorage
-  useEffect(() => {
-    if (!isInitialized || isInitialLoad) return;
-    
-    if (authUser) {
-      supabase.from('cloud_saves').upsert({ 
-        user_id: authUser.id, 
-        sessions_data: sessions,
-        memory_data: userMemory
-      }).then(({error}) => { 
-        if(error) console.error("Error nyimpen ke Cloud: ", error.message);
-      });
-    } else {
-      localStorage.setItem('genz-bot-sessions', JSON.stringify(sessions));
-      localStorage.setItem('genz-bot-memory', JSON.stringify(userMemory));
-    }
-    localStorage.setItem('genz_theme', theme);
-  }, [sessions, userMemory, theme, isInitialLoad, authUser, isInitialized]);
-
   const value = {
     sessions, setSessions,
     activeSessionId, setActiveSessionId,
@@ -158,7 +197,7 @@ export function AppProvider({ children }) {
     authUser, isAuthChecking,
     hasSelectedMood, setHasSelectedMood,
     isInitialLoad, isInitialized,
-    createNewSession, clearAllSessions, DEFAULT_MESSAGE
+    createNewSession, clearAllSessions, updateSessionMessages, deleteSessionById, DEFAULT_MESSAGE
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

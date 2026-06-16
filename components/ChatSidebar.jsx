@@ -9,7 +9,7 @@ export default function ChatSidebar() {
     sessions, setSessions, 
     activeSessionId, setActiveSessionId, 
     isSidebarOpen, setIsSidebarOpen,
-    authUser, createNewSession, clearAllSessions,
+    authUser, createNewSession, clearAllSessions, deleteSessionById,
     theme, setTheme,
     chatMode, setChatMode
   } = useAppContext();
@@ -25,11 +25,7 @@ export default function ChatSidebar() {
       alert("Gabisa hapus chat terakhir ngab!");
       return;
     }
-    const newSessions = sessions.filter(s => s.id !== id);
-    setSessions(newSessions);
-    if (activeSessionId === id) {
-      setActiveSessionId(newSessions[0].id);
-    }
+    deleteSessionById(id);
   };
 
   const handleClearAll = () => {
