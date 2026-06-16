@@ -47,33 +47,9 @@ export default function Home() {
       const activeSession = sessions.find(s => s.id === activeSessionId);
       if (activeSession) {
         setMessages(activeSession.messages);
-        messageSessionIdRef.current = activeSessionId;
       }
     }
   }, [activeSessionId, sessions.length]);
-
-  // Sinkronisasi messages ke global session state
-  useEffect(() => {
-    if (!isInitialized || !activeSessionId || messages.length === 0) return;
-    if (activeSessionId !== messageSessionIdRef.current) return; // FIX: Mencegah pesan lama nimpa sesi baru
-    
-    setSessions(prev => prev.map(s => {
-      if (s.id === activeSessionId) {
-        let newTitle = s.title;
-        if (s.title.startsWith('Chat ')) {
-          const firstUserMsg = messages.find(m => m.role === 'user');
-          if (firstUserMsg) {
-            const text = firstUserMsg.content || 'Gambar Meme';
-            newTitle = text.substring(0, 22) + (text.length > 22 ? '...' : '');
-          }
-        }
-        return { ...s, messages, title: newTitle };
-      }
-      return s;
-    }));
-    scrollToBottom();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages, activeSessionId]);
 
   // Efek Timer Cooldown
   useEffect(() => {
@@ -185,6 +161,23 @@ export default function Home() {
     recognition.start();
   };
 
+  const syncSession = (msgs) => {
+    setSessions(prev => prev.map(s => {
+      if (s.id === activeSessionId) {
+        let newTitle = s.title;
+        if (s.title === 'Chat Baru' || s.title.startsWith('Chat ')) {
+          const firstUserMsg = msgs.find(m => m.role === 'user');
+          if (firstUserMsg) {
+            const text = firstUserMsg.content || 'Gambar Meme';
+            newTitle = text.substring(0, 22) + (text.length > 22 ? '...' : '');
+          }
+        }
+        return { ...s, messages: msgs, title: newTitle };
+      }
+      return s;
+    }));
+  };
+
   const sendMessage = async (customText = null, customImage = null, overrideMessages = null) => {
     const textToSend = customText !== null ? customText : input;
     const imageToSend = customImage !== null ? customImage : selectedImage;
@@ -194,7 +187,10 @@ export default function Home() {
     const currentMessages = overrideMessages !== null ? overrideMessages : messages;
     const newUserMessage = { role: 'user', content: textToSend, image: imageToSend };
     
-    setMessages([...currentMessages, newUserMessage]);
+    const messagesWithUser = [...currentMessages, newUserMessage];
+    setMessages(messagesWithUser);
+    syncSession(messagesWithUser);
+    setTimeout(scrollToBottom, 100);
     
     if (customText === null) {
       setInput('');
@@ -202,6 +198,7 @@ export default function Home() {
     }
     setIsLoading(true);
     setMessages((prev) => [...prev, { role: 'model', content: '' }]);
+    setTimeout(scrollToBottom, 100);
 
     try {
       const res = await fetch('/api/chat', {
@@ -215,6 +212,7 @@ export default function Home() {
         setMessages((prev) => {
           const updated = [...prev];
           updated[updated.length - 1] = { role: 'model', content: errorText };
+          syncSession(updated);
           return updated;
         });
         setIsLoading(false);
@@ -235,6 +233,7 @@ export default function Home() {
           newMsgs[newMsgs.length - 1].content = botResponse;
           return newMsgs;
         });
+        scrollToBottom();
       }
       
       // Extract Long-Term Memory Facts after streaming completes
@@ -245,6 +244,7 @@ export default function Home() {
         newFacts.push(match[1].trim());
       }
       
+      let finalBotResponse = botResponse;
       if (newFacts.length > 0) {
         setUserMemory(prev => {
           const updated = [...prev];
@@ -252,19 +252,24 @@ export default function Home() {
           return updated;
         });
         // Remove the tags from the final message visually
-        botResponse = botResponse.replace(factRegex, '').trim();
+        finalBotResponse = botResponse.replace(factRegex, '').trim();
         setMessages(prev => {
           const newMsgs = [...prev];
-          newMsgs[newMsgs.length - 1].content = botResponse;
+          newMsgs[newMsgs.length - 1].content = finalBotResponse;
           return newMsgs;
         });
       }
       
-      if (shouldSpeakRef.current) speakText(botResponse);
+      // Simpan final state ke session global!
+      const finalAllMessages = [...messagesWithUser, { role: 'model', content: finalBotResponse }];
+      syncSession(finalAllMessages);
+      
+      if (shouldSpeakRef.current) speakText(finalBotResponse);
     } catch (error) {
       setMessages(prev => {
         const newArray = [...prev];
         newArray[newArray.length - 1].content += ' (Error API, coba lagi ngab)';
+        syncSession(newArray);
         return newArray;
       });
     } finally {
