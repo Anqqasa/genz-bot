@@ -21,6 +21,17 @@ export function AppProvider({ children }) {
   const [hasSelectedMood, setHasSelectedMood] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [broadcastMessage, setBroadcastMessage] = useState(''); // NEW
+
+  // Fetch broadcast
+  useEffect(() => {
+    fetch('/api/admin')
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.message) setBroadcastMessage(data.message);
+      })
+      .catch(e => console.error("Gagal fetch broadcast", e));
+  }, []);
 
   // Default initial message
   const DEFAULT_MESSAGE = { 
@@ -218,7 +229,8 @@ export function AppProvider({ children }) {
     authUser, isAuthChecking,
     hasSelectedMood, setHasSelectedMood,
     isInitialLoad, isInitialized,
-    createNewSession, clearAllSessions, updateSessionMessages, updateSessionTitle, deleteSessionById, DEFAULT_MESSAGE
+    createNewSession, clearAllSessions, updateSessionMessages, updateSessionTitle, deleteSessionById, DEFAULT_MESSAGE,
+    broadcastMessage
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
