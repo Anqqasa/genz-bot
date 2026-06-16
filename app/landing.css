@@ -261,11 +261,15 @@
     overflow-y: auto; 
     overflow-x: hidden; 
   }
+  .landing-main {
+    justify-content: flex-start;
+    padding-top: 2rem;
+  }
   .landing-content { flex-direction: column; text-align: center; }
   .hero-section { text-align: center; }
   .cta-area { justify-content: center; }
   .features-grid-compact { grid-template-columns: 1fr; }
-  .mascot-showcase { height: 200px; margin-top: 2rem; }
-  .glitch-float { left: 0; }
-  .krak-float { right: 0; }
+  .mascot-showcase { height: 150px; margin-top: 1rem; transform: scale(0.8); }
+  .glitch-float { left: -10px; }
+  .krak-float { right: -10px; }
 }
