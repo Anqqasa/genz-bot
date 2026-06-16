@@ -1,6 +1,7 @@
 /* Base App Layout */
 .app-layout {
   display: flex;
+  height: 100%;
   height: 100dvh;
   width: 100vw;
   overflow: hidden;
@@ -192,10 +193,11 @@
     display: block;
   }
   .chat-container {
-    padding: max(1rem, env(safe-area-inset-top)) 0.8rem max(1rem, env(safe-area-inset-bottom));
+    padding: max(0.5rem, env(safe-area-inset-top)) 0.5rem max(0.5rem, env(safe-area-inset-bottom));
   }
   .chat-header {
-    padding: 0.8rem;
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.5rem;
     gap: 0.5rem;
   }
 }
@@ -678,7 +680,7 @@
   color: #a3b8cc;
 }
 
-/* Mobile Header Fixes */
+/* Mobile View Fixes */
 @media (max-width: 768px) {
   .auth-badge {
     display: none !important;
@@ -695,5 +697,35 @@
   }
   .header-info {
     flex: 0 1 auto;
+  }
+  .avatar {
+    font-size: 1.2rem;
+    padding: 0.3rem;
+  }
+  .menu-btn {
+    margin-right: 0.5rem;
+  }
+  .input-area {
+    padding: 0.6rem 0.8rem;
+    gap: 0.4rem;
+  }
+  .mic-btn, .attach-btn, .send-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 1rem;
+  }
+  .chat-input {
+    font-size: 0.95rem;
+    padding: 0.4rem;
+  }
+  .message {
+    padding: 0.8rem 1rem;
+    font-size: 0.9rem;
+  }
+  .messages-area {
+    gap: 1rem;
+  }
+  .message-wrapper {
+    max-width: 90%;
   }
 }

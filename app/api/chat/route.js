@@ -12,9 +12,38 @@ const rawGroqKeys = process.env.GROQ_API_KEYS || process.env.GROQ_API_KEY || '';
 const groqKeys = rawGroqKeys.split(',').map(k => k.trim()).filter(k => k.length > 0);
 const groqInstances = groqKeys.map(key => new Groq({ apiKey: key }));
 
+// Rate Limiter Cache (Memory)
+const usageTracker = new Map();
+let lastResetDate = new Date().toISOString().split('T')[0];
+
 export async function POST(req) {
   try {
-    const { message, history, image, toxicity = 3 } = await req.json();
+    const { message, history, image, toxicity = 3, user = 'guest' } = await req.json();
+
+    // ==========================================
+    // RATE LIMITING LOGIC
+    // ==========================================
+    const today = new Date().toISOString().split('T')[0];
+    if (today !== lastResetDate) {
+      usageTracker.clear();
+      lastResetDate = today;
+    }
+
+    if (!user.includes('anqqasa')) {
+      // Dapatkan IP address jika guest, namun karena di middleware Vercel IP ada di header 'x-forwarded-for', 
+      // kita gunakan identifier gabungan (contoh: guest_192.168.1.1) jika user == 'guest'.
+      // Untuk sederhananya, kita baca IP:
+      const ip = req.headers.get('x-forwarded-for') || 'unknown';
+      const identifier = user === 'guest' ? `guest_${ip}` : user;
+      
+      const currentUsage = usageTracker.get(identifier) || 0;
+      const MAX_LIMIT = user === 'guest' ? 10 : 30;
+      
+      if (currentUsage >= MAX_LIMIT) {
+        return new Response("Waduh ngab, jatah limit harian lu udah ludes (mentok limit)! Lu nanya mulu pusing pala gua, mending lu tidur aja gih, tunggu besok!", { status: 429 });
+      }
+      usageTracker.set(identifier, currentUsage + 1);
+    }
 
     if (!message && !image) {
       return new Response("Kosong gitu ngab, mau pamer kekuatan batin lu?", { status: 400 });
