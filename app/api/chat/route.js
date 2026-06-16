@@ -80,11 +80,10 @@ export async function POST(req) {
       - Kalau ada pertanyaan tentang gambar, ingat baik-baik konteks obrolan sebelumnya!
     `;
 
-    // Logika Pintar: Hanya beri tahu AI tentang fitur meme jika diminta ATAU secara acak (15% peluang)
+    // Logika Pintar: Hanya beri tahu AI tentang fitur meme jika diminta secara eksplisit
     const isMemeRequested = /(meme|mimi|mim|gambar|ngakak|lucu|roast|ejek)/i.test(message || '');
-    const randomMemeChance = Math.random() < 0.15;
 
-    if (isMemeRequested || randomMemeChance) {
+    if (isMemeRequested) {
       systemInstruction += `
       
       [FITUR SPESIAL: AUTO-MEME]
