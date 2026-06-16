@@ -4,7 +4,7 @@ import { X, PlusCircle, Trash2, User, LogOut, Cloud, Download, Palette, AlertTri
 import { useAppContext } from '../context/AppContext';
 import { supabase } from '../lib/supabase';
 
-export default function ChatSidebar({ setShowLoginModal }) {
+export default function ChatSidebar() {
   const { 
     sessions, setSessions, 
     activeSessionId, setActiveSessionId, 
@@ -128,7 +128,7 @@ export default function ChatSidebar({ setShowLoginModal }) {
               </button>
             </div>
           ) : (
-            <button onClick={() => setShowLoginModal(true)} className="new-chat-btn" style={{marginTop: 'auto', background: 'rgba(139, 92, 246, 0.2)', borderColor: 'var(--neon-purple)', color: 'var(--neon-purple)', textShadow: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}>
+            <button onClick={() => window.location.href = '/login'} className="new-chat-btn" style={{marginTop: 'auto', background: 'rgba(139, 92, 246, 0.2)', borderColor: 'var(--neon-purple)', color: 'var(--neon-purple)', textShadow: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}>
               <Cloud size={18} /> Login (Cloud Sync)
             </button>
           )}

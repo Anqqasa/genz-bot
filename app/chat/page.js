@@ -8,7 +8,6 @@ import { useAppContext } from '../../context/AppContext';
 import ChatSidebar from '../../components/ChatSidebar';
 import ChatBubble from '../../components/ChatBubble';
 import ChatInput from '../../components/ChatInput';
-import LoginModal from '../../components/LoginModal';
 import Mascot from '../../components/Mascot';
 import './page.css';
 
@@ -33,7 +32,6 @@ export default function Home() {
   const [selectedImage, setSelectedImage] = useState(null);
   
   const [playingIndex, setPlayingIndex] = useState(null);
-  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const messagesAreaRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -304,8 +302,6 @@ export default function Home() {
 
   return (
     <div className="app-layout">
-      {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
-
       {!hasSelectedMood && (
         <div className="mood-modal-overlay">
           <div className="mood-modal-content">
@@ -323,7 +319,7 @@ export default function Home() {
         </div>
       )}
 
-      <ChatSidebar setShowLoginModal={setShowLoginModal} />
+      <ChatSidebar />
 
       <main className="chat-container">
         <header className="chat-header">
