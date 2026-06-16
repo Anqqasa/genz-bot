@@ -3,8 +3,11 @@ import Link from 'next/link';
 import Mascot from '../components/Mascot';
 import './landing.css';
 import { Sparkles, MessageSquare, Flame, Cpu } from 'lucide-react';
+import { useAppContext } from '../context/AppContext';
 
 export default function LandingPage() {
+  const { authUser, isAuthChecking } = useAppContext();
+
   return (
     <div className="landing-container">
       <div className="landing-grid-bg"></div>
@@ -27,9 +30,11 @@ export default function LandingPage() {
               Chatbot dengan bahasa gaul Indonesia yang nggak ada filter. Fitur roasting brutal, mode tongkrongan 3 AI, dan generator meme otomatis!
             </p>
             <div className="cta-area">
-              <Link href="/login" className="cta-button primary">
-                <Flame size={20}/> Mulai Uji Nyali
-              </Link>
+              {!isAuthChecking && (
+                <Link href={authUser ? "/chat" : "/login"} className="cta-button primary">
+                  <Flame size={20}/> {authUser ? "Lanjut Ngegas (Chat)" : "Mulai Uji Nyali"}
+                </Link>
+              )}
             </div>
           </div>
 

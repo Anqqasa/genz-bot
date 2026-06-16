@@ -1,19 +1,28 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Cloud, UserPlus, User, ArrowLeft, Flame, AlertCircle } from 'lucide-react';
 import Mascot from '../../components/Mascot';
 import { supabase } from '../../lib/supabase';
 import './page.css';
+import { useAppContext } from '../../context/AppContext';
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [mode, setMode] = useState('select'); // select, login, register
+  const [mode, setMode] = useState('select'); // 'select', 'login', 'register'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const { authUser, isAuthChecking } = useAppContext();
+
+  useEffect(() => {
+    if (!isAuthChecking && authUser) {
+      router.push('/chat');
+    }
+  }, [authUser, isAuthChecking, router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
