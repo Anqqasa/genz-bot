@@ -35,7 +35,13 @@ export default function LoginPage() {
     setIsLoading(false);
 
     if (error) {
-      setErrorMsg("Gagal Login: " + error.message);
+      let customError = error.message;
+      if (customError.includes('Invalid login credentials')) {
+        customError = "Email atau Password lu salah ngab! Cek lagi dah.";
+      } else if (customError.includes('Email not confirmed')) {
+        customError = "Email lu belum diverifikasi! Cek Inbox/Spam lu buat klik linknya.";
+      }
+      setErrorMsg("Gagal: " + customError);
     } else {
       router.push('/chat');
     }
@@ -53,7 +59,11 @@ export default function LoginPage() {
     setIsLoading(false);
 
     if (error) {
-      setErrorMsg("Gagal Daftar: " + error.message);
+      let customError = error.message;
+      if (customError.includes('User already registered')) {
+        customError = "Buset, email ini udah pernah didaftarin ngab! Pake email lain atau langsung login aja.";
+      }
+      setErrorMsg("Gagal: " + customError);
     } else {
       if (data?.session === null || data?.user?.identities?.length === 0) {
         setSuccessMsg('Akun berhasil dibuat! Cek INBOX/SPAM email lu sekarang buat klik link verifikasi.');
