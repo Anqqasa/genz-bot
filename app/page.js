@@ -31,6 +31,10 @@ export default function Home() {
   const [editingIndex, setEditingIndex] = useState(null);
   const [editText, setEditText] = useState('');
   
+  // Rate Limit State
+  const [usageCount, setUsageCount] = useState(0);
+  const [isLimitReached, setIsLimitReached] = useState(false);
+  
   // Auth & Cloud State
   const [authUser, setAuthUser] = useState(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
@@ -123,6 +127,34 @@ export default function Home() {
     } else {
       loadData();
     }
+  }, [authUser, isAuthChecking]);
+
+  // Cek Usage Limit Harian
+  useEffect(() => {
+    if (isAuthChecking) return;
+    const checkCurrentUsage = () => {
+      if (authUser && authUser.email && authUser.email.includes('anqqasa')) {
+        setIsLimitReached(false);
+        return;
+      }
+      const today = new Date().toISOString().split('T')[0];
+      const key = authUser ? `genz_usage_${authUser.id}` : `genz_guest_usage`;
+      try {
+        const stored = localStorage.getItem(key);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.date === today) {
+            setUsageCount(parsed.count);
+            const MAX_LIMIT = authUser ? 30 : 10;
+            setIsLimitReached(parsed.count >= MAX_LIMIT);
+          } else {
+            setIsLimitReached(false);
+            setUsageCount(0);
+          }
+        }
+      } catch(e) {}
+    };
+    checkCurrentUsage();
   }, [authUser, isAuthChecking]);
 
   // Sinkronisasi messages ke active session
@@ -252,12 +284,43 @@ export default function Home() {
     }
   };
 
+  const checkAndUpdateUsage = () => {
+    if (authUser && authUser.email && authUser.email.includes('anqqasa')) return true;
+    const today = new Date().toISOString().split('T')[0];
+    const key = authUser ? `genz_usage_${authUser.id}` : `genz_guest_usage`;
+    let usageData = { date: today, count: 0 };
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.date === today) usageData = parsed;
+      }
+    } catch(e) {}
+
+    const MAX_LIMIT = authUser ? 30 : 10;
+    if (usageData.count >= MAX_LIMIT) {
+      setIsLimitReached(true);
+      return false;
+    }
+
+    usageData.count += 1;
+    localStorage.setItem(key, JSON.stringify(usageData));
+    setUsageCount(usageData.count);
+    if (usageData.count >= MAX_LIMIT) setIsLimitReached(true);
+    return true;
+  };
+
   const sendMessage = async (e, customText = null, customImage = null, overrideMessages = null) => {
     if (e) e.preventDefault();
     const textToSend = customText !== null ? customText : input;
     const imageToSend = customImage !== null ? customImage : selectedImage;
     
     if (!textToSend.trim() && !imageToSend) return;
+
+    if (!checkAndUpdateUsage()) {
+      alert("Waduh, limit harian lu udah abis ngab! Tunggu besok lagi ya.");
+      return;
+    }
 
     // Jika dipanggil oleh fitur Regenerate, gunakan overrideMessages, jika tidak gunakan state saat ini
     const currentMessages = overrideMessages !== null ? overrideMessages : messages;
@@ -282,7 +345,8 @@ export default function Home() {
           message: textToSend, 
           history: currentMessages, 
           image: imageToSend, 
-          toxicity 
+          toxicity,
+          user: authUser ? (authUser.email || authUser.id) : 'guest'
         }),
       });
 
@@ -767,9 +831,9 @@ export default function Home() {
             ref={fileInputRef} 
             onChange={handleImageUpload} 
             style={{display: 'none'}} 
-            disabled={cooldown > 0}
+            disabled={cooldown > 0 || isLimitReached}
           />
-          <button type="button" onClick={() => fileInputRef.current.click()} className="mic-btn attach-btn" title="Kirim Foto" disabled={isLoading || cooldown > 0} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+          <button type="button" onClick={() => fileInputRef.current.click()} className="mic-btn attach-btn" title="Kirim Foto" disabled={isLoading || cooldown > 0 || isLimitReached} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
             <Paperclip size={20} />
           </button>
           <button
@@ -777,7 +841,7 @@ export default function Home() {
             onClick={startListening}
             className={`mic-btn ${isListening ? 'recording' : ''}`}
             title="Bicara pake Mic"
-            disabled={isLoading || cooldown > 0}
+            disabled={isLoading || cooldown > 0 || isLimitReached}
             style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}
           >
             {isListening ? <Mic size={20} color="white" /> : <Mic size={20} />}
@@ -786,11 +850,11 @@ export default function Home() {
             type="text"
             value={input}
             onChange={(e) => { setInput(e.target.value); shouldSpeakRef.current = false; }}
-            placeholder={cooldown > 0 ? `Sabar dek, tunggu ${cooldown} detik...` : "Ketik pesen lu di sini dek..."}
+            placeholder={isLimitReached ? "Limit harian abis ngab, besok lagi!" : (cooldown > 0 ? `Sabar dek, tunggu ${cooldown} detik...` : "Ketik pesen lu di sini dek...")}
             className="chat-input"
-            disabled={isLoading || cooldown > 0}
+            disabled={isLoading || cooldown > 0 || isLimitReached}
           />
-          <button type="submit" className="send-btn" disabled={(!input.trim() && !selectedImage) || isLoading || cooldown > 0} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+          <button type="submit" className="send-btn" disabled={(!input.trim() && !selectedImage) || isLoading || cooldown > 0 || isLimitReached} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
             <Send size={20} />
           </button>
         </form>
