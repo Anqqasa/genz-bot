@@ -25,7 +25,7 @@ export function AppProvider({ children }) {
 
   // Fetch broadcast
   useEffect(() => {
-    fetch('/api/admin')
+    fetch(`/api/admin?t=${new Date().getTime()}`)
       .then(r => r.json())
       .then(data => {
         if (data && data.message) setBroadcastMessage(data.message);
