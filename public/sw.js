@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sipaling-ai-v1';
+const CACHE_NAME = 'sipaling-ai-v2';
 
 // Daftar file yang ingin dicache
 const urlsToCache = [
@@ -34,24 +34,27 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Hanya proses GET request untuk page / asset statis (bukan API POST)
+  // Hanya proses GET request
   if (event.request.method !== 'GET') return;
-  // Jangan cache request Supabase / API external
+  // Jangan cache API
   if (event.request.url.includes('supabase.co') || event.request.url.includes('/api/')) {
     return;
   }
 
+  // Network-First Strategy agar selalu dapat update terbaru
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Return cache if available
-        if (response) {
-          return response;
-        }
-        // Else fetch from network
-        return fetch(event.request).catch(() => {
-          // Fallback if offline
+    fetch(event.request)
+      .then(networkResponse => {
+        // Simpan ke cache untuk offline
+        const clonedResponse = networkResponse.clone();
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, clonedResponse);
         });
+        return networkResponse;
+      })
+      .catch(() => {
+        // Fallback ke cache jika offline
+        return caches.match(event.request);
       })
   );
 });
