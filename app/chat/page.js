@@ -330,24 +330,6 @@ export default function Home() {
       <ChatSidebar />
 
       <main className="chat-container">
-        {broadcastMessage && (
-          <div style={{
-            background: 'linear-gradient(45deg, #ef4444, #f97316)',
-            color: 'white',
-            padding: '10px 15px',
-            textAlign: 'center',
-            fontWeight: 'bold',
-            zIndex: 99,
-            boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
-            position: 'sticky',
-            top: 0,
-            left: 0,
-            right: 0,
-            animation: 'pulse 2s infinite'
-          }}>
-            📢 {broadcastMessage}
-          </div>
-        )}
         <header className="chat-header">
           <button onClick={() => setIsSidebarOpen(true)} className="menu-btn"><Menu size={24} /></button>
           <div className="header-info">
