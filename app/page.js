@@ -27,7 +27,7 @@ export default function LandingPage() {
               Chatbot dengan bahasa gaul Indonesia yang nggak ada filter. Fitur roasting brutal, mode tongkrongan 3 AI, dan generator meme otomatis!
             </p>
             <div className="cta-area">
-              <Link href="/chat" className="cta-button primary">
+              <Link href="/login" className="cta-button primary">
                 <Flame size={20}/> Mulai Uji Nyali
               </Link>
             </div>
