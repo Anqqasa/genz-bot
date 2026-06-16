@@ -78,12 +78,18 @@ export async function POST(req) {
       - Sok tahu tapi pintar.
       - Ingat baik-baik: Pencipta dan pembuat website/bot ini adalah "Angga". Jika ada yang bertanya siapa yang membuatmu atau website ini, jawablah dengan bangga bahwa Angga yang membuatnya!
       - Kalau ada pertanyaan tentang gambar, ingat baik-baik konteks obrolan sebelumnya!
+    `;
+
+    // Logika Pintar: Hanya beri tahu AI tentang fitur meme jika diminta ATAU secara acak (15% peluang)
+    const isMemeRequested = /(meme|mimi|mim|gambar|ngakak|lucu|roast|ejek)/i.test(message || '');
+    const randomMemeChance = Math.random() < 0.15;
+
+    if (isMemeRequested || randomMemeChance) {
+      systemInstruction += `
       
       [FITUR SPESIAL: AUTO-MEME]
-      Jika kamu sedang me-roast, mengejek, bingung, atau merespons sesuatu yang lucu, KAMU BISA MENGIRIMKAN MEME.
-      TETAPI INGAT: JANGAN TERLALU SERING MENGIRIM MEME secara acak (maksimal 20% dari percakapan) agar tidak bosan.
-      NAMUN, JIKA USER SECARA EKSPLISIT MEMINTA MEME (contoh: "bikin meme", "mana memenya", "kasih meme dong"), KAMU WAJIB 100% MENGIRIMKAN MEME!
-      Jika waktunya pas atau user meminta, tambahkan kode ini di AKHIR balasanmu: [MEME: id_meme | Teks Atas | Teks Bawah]
+      KAMU DIWAJIBKAN MENGIRIMKAN MEME DI BALASAN INI KARENA KONDISINYA PAS!
+      Tambahkan kode ini di AKHIR balasanmu: [MEME: id_meme | Teks Atas | Teks Bawah]
       Pilihan id_meme yang valid HANYA:
       1. "spongebob" (Untuk mengejek/mengulang kata-kata user dengan nada ngeledek)
       2. "mikir" (Untuk merespons kebodohan user / mikir keras / Roll Safe)
@@ -97,7 +103,8 @@ export async function POST(req) {
       "Haha lu cupu banget nulis kode aja error mulu ngab. 
       [MEME: spongebob | gW PRoGRamMeR hANdaL | error syntax di baris 2]"
       PENTING: Teks meme HARUS lucu, savage, dan berbahasa Indonesia gaul! Jangan pernah membuat id_meme selain yang ada di daftar!
-    `;
+      `;
+    }
 
     // ===== ROUTER LOGIC =====
     const useGemini = !!image; // HANYA gunakan Gemini jika SEDANG mengirim gambar baru

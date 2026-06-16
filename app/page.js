@@ -9,6 +9,7 @@ import ChatSidebar from '../components/ChatSidebar';
 import ChatBubble from '../components/ChatBubble';
 import ChatInput from '../components/ChatInput';
 import LoginModal from '../components/LoginModal';
+import Mascot from '../components/Mascot';
 import './page.css';
 
 export default function Home() {
@@ -274,7 +275,10 @@ export default function Home() {
       {!hasSelectedMood && (
         <div className="mood-modal-overlay">
           <div className="mood-modal-content">
-            <h2 style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}><Bot size={24} /> Pilih Vibe Bot Hari Ini</h2>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+              <Mascot toxicity={toxicity} size={80} />
+            </div>
+            <h2 style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}>Pilih Vibe Bot Hari Ini</h2>
             <p>Seberapa pedas kata-katanya yang lu siap terima?</p>
             <div className="mood-options">
               <button onClick={() => {setToxicity(1); setHasSelectedMood(true); localStorage.setItem('genz_has_selected_mood', 'true');}} className="mood-btn chill" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center'}}><Smile size={18} /> Chill (Sopan)</button>
@@ -291,7 +295,9 @@ export default function Home() {
         <header className="chat-header">
           <button onClick={() => setIsSidebarOpen(true)} className="menu-btn"><Menu size={24} /></button>
           <div className="header-info">
-            <div className="avatar"><Bot size={32} /></div>
+            <div className="avatar" style={{ background: 'transparent', padding: 0 }}>
+              <Mascot toxicity={toxicity} size={48} />
+            </div>
             <div>
               <h1 className="bot-name">SiPaling.AI</h1>
               <span className="status"><span className="status-dot"></span> Online and Ready to Roast</span>
@@ -332,11 +338,14 @@ export default function Home() {
               onCapture={captureScreenshot}
               onRegenerate={regenerateLastMessage}
               onEditSubmit={handleEditSubmit}
+              toxicity={toxicity}
             />
           ))}
           {isLoading && messages[messages.length - 1]?.role !== 'model' && (
             <div className="message-wrapper model">
-              <div className="msg-avatar"><Bot size={24} /></div>
+              <div className="msg-avatar" style={{ background: 'transparent', padding: 0 }}>
+                <Mascot toxicity={toxicity} size={36} />
+              </div>
               <div className="message model loading-indicator">
                 <span>.</span><span>.</span><span>.</span>
               </div>

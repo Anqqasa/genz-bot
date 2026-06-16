@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Bot, User, Volume2, Square, Share2, RefreshCw, Pencil } from 'lucide-react';
+import { User, Volume2, Square, Share2, RefreshCw, Pencil } from 'lucide-react';
 import AutoMeme from './AutoMeme';
+import Mascot from './Mascot';
 
 export default function ChatBubble({ 
   msg, 
@@ -14,7 +15,8 @@ export default function ChatBubble({
   onSpeak,
   onCapture,
   onRegenerate,
-  onEditSubmit
+  onEditSubmit,
+  toxicity = 3
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(msg.content);
@@ -45,7 +47,11 @@ export default function ChatBubble({
 
   return (
     <div id={`msg-wrap-${index}`} className={`message-wrapper ${msg.role}`}>
-      {msg.role === 'model' && <div className="msg-avatar"><Bot size={24} /></div>}
+      {msg.role === 'model' && (
+        <div className="msg-avatar" style={{ background: 'transparent', padding: 0 }}>
+          <Mascot toxicity={toxicity} size={36} />
+        </div>
+      )}
       
       <div className={`message ${msg.role}`}>
         {msg.image && <img src={msg.image} alt="User Upload" className="uploaded-image" />}
