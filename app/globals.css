@@ -40,7 +40,7 @@
   --glass-bg-user: rgba(255, 179, 217, 0.15);
   --glass-border: rgba(255, 200, 220, 0.2);
 }
-  
+:root {
   --radius-lg: 24px;
   --radius-md: 16px;
   --font-main: 'Outfit', sans-serif;
