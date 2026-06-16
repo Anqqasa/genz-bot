@@ -14,7 +14,7 @@ const MEME_MAP = {
 
 export default function AutoMeme({ memeId, topText, bottomText }) {
   const canvasRef = useRef(null);
-  const [imgUrl, setImgUrl] = useState('');
+  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
     const realId = MEME_MAP[memeId] || MEME_MAP['spongebob']; // Fallback
@@ -24,7 +24,7 @@ export default function AutoMeme({ memeId, topText, bottomText }) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
       const img = new Image();
-      img.crossOrigin = "anonymous";
+      // Bypassing CORS dengan menghapus crossOrigin karena kita tidak perlu toDataURL (Hanya render Canvas)
       img.src = url;
       
       img.onload = () => {
@@ -60,28 +60,25 @@ export default function AutoMeme({ memeId, topText, bottomText }) {
           ctx.strokeText(bottomText.toUpperCase(), width / 2, height - 10);
           ctx.fillText(bottomText.toUpperCase(), width / 2, height - 10);
         }
-
-        setImgUrl(canvas.toDataURL('image/jpeg', 0.8));
       };
+
+      img.onerror = () => {
+        console.error("Gagal memuat template meme dari Imgflip");
+        setIsError(true);
+      }
     }
   }, [memeId, topText, bottomText]);
 
-  if (!imgUrl) {
-    return (
-      <div style={{display: 'flex', justifyContent: 'center', margin: '1rem 0'}}>
-        {/* Hidden canvas untuk proses render */}
-        <canvas ref={canvasRef} style={{display: 'none'}}></canvas>
-        <div style={{padding: '1rem', background: 'rgba(255,255,255,0.1)', borderRadius: '8px', color: 'var(--text-secondary)'}}>
-          Memproses Meme...
-        </div>
-      </div>
-    );
+  if (isError) {
+    return <div style={{color: 'red', fontSize: '0.8rem'}}>Meme gagal dimuat ngab.</div>;
   }
 
   return (
     <div style={{display: 'flex', justifyContent: 'center', margin: '1rem 0'}}>
-      <canvas ref={canvasRef} style={{display: 'none'}}></canvas>
-      <img src={imgUrl} alt="AI Generated Meme" style={{maxWidth: '100%', borderRadius: '8px', border: '2px solid var(--neon-cyan)'}} />
+      <canvas 
+        ref={canvasRef} 
+        style={{maxWidth: '100%', borderRadius: '8px', border: '2px solid var(--neon-cyan)', background: '#000'}}
+      ></canvas>
     </div>
   );
 }
