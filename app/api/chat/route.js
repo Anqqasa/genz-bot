@@ -211,10 +211,16 @@ export async function POST(req) {
     // ===== ROUTER LOGIC =====
     let finalMessage = message || '';
     if (documentText) {
-      finalMessage += `\n\n[DOKUMEN LAMPIRAN]\n${documentText}`;
+      // Potong teks dokumen agar tidak meledakkan limit token Groq (maks 8k token / ~24k karakter)
+      const MAX_DOC_LENGTH = 20000;
+      let safeDocText = documentText;
+      if (documentText.length > MAX_DOC_LENGTH) {
+        safeDocText = documentText.substring(0, MAX_DOC_LENGTH) + '\n\n...[Teks dipotong karena laporan terlalu panjang]';
+      }
+      finalMessage += `\n\n[DOKUMEN LAMPIRAN]\n${safeDocText}`;
     }
 
-    const useGemini = !!image || !!documentText; // GUNAKAN Gemini jika ada gambar atau dokumen!
+    const useGemini = !!image; // HANYA gunakan Gemini jika SEDANG mengirim gambar baru
 
     if (!useGemini && groqInstances.length > 0) {
       // ==========================================
