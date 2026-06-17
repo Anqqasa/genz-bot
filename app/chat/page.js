@@ -38,6 +38,29 @@ export default function Home() {
   const [streamingContent, setStreamingContent] = useState('');
   
   const [playingIndex, setPlayingIndex] = useState(null);
+  const [currentStatus, setCurrentStatus] = useState("Online and Ready to Roast");
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedLimit = localStorage.getItem('genz_remaining_limit');
+      if (savedLimit) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setRemainingLimit(savedLimit);
+      }
+    }
+    const STATUSES = [
+      "Online and Ready to Roast",
+      "Lagi mikir jawaban sarkas...",
+      "Ngetik bentar, mikir lama",
+      "Tidur? Mending lu coding",
+      "Senggol dong, bosq",
+      "Siap menguliti mental lu",
+      "Udah makan belum dek?",
+      "Rebahan sambil nunggu pesan lu"
+    ];
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCurrentStatus(STATUSES[Math.floor(Math.random() * STATUSES.length)]);
+  }, []);
 
   const messagesAreaRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -234,7 +257,9 @@ export default function Home() {
       const rateLimitRemaining = res.headers.get('X-RateLimit-Remaining');
       const rateLimitTotal = res.headers.get('X-RateLimit-Limit');
       if (rateLimitRemaining && rateLimitTotal) {
-        setRemainingLimit(`${rateLimitRemaining} / ${rateLimitTotal}`);
+        const limitStr = `${rateLimitRemaining} / ${rateLimitTotal}`;
+        setRemainingLimit(limitStr);
+        localStorage.setItem('genz_remaining_limit', limitStr);
       }
 
       if (!res.ok) {
@@ -377,7 +402,7 @@ export default function Home() {
             <div>
               <h1 className="bot-name">SiPaling.AI</h1>
               <span className="status">
-                <span className="status-dot"></span> Online and Ready to Roast
+                <span className="status-dot"></span> {currentStatus}
                 {remainingLimit && (
                   <span style={{ marginLeft: '8px', fontSize: '0.75rem', color: '#fbbf24', background: 'rgba(251, 191, 36, 0.2)', padding: '2px 8px', borderRadius: '12px' }}>
                     Sisa Limit: {remainingLimit}
