@@ -1,20 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
 
 :root, [data-theme="cyberpunk"] {
-  --bg-dark: #030305;
+  --bg-dark: #0B1120;
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   
-  /* Cyberpunk Neon Colors */
-  --neon-cyan: #00f2fe;
-  --neon-pink: #fe0979;
-  --neon-purple: #8b5cf6;
+  /* Premium AI Theme Colors */
+  --neon-cyan: #06b6d4;
+  --neon-pink: #8b5cf6;
+  --neon-purple: #6366f1;
   
   /* Glassmorphism Settings */
-  --glass-bg-bot: rgba(15, 20, 30, 0.6);
-  --glass-bg-user: rgba(0, 242, 254, 0.08);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-blur: blur(20px);
+  --glass-bg-bot: rgba(15, 23, 42, 0.65);
+  --glass-bg-user: rgba(30, 41, 59, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.04);
+  --glass-blur: blur(32px);
 }
 
 [data-theme="y2k"] {
