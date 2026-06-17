@@ -19,15 +19,22 @@ const groqInstances = groqKeys.map(key => new Groq({ apiKey: key }));
 const usageTracker = new Map();
 let lastResetDate = new Date().toISOString().split('T')[0];
 
-let ratelimit = null;
+let ratelimitGuest = null;
+let ratelimitUser = null;
 if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
   const redis = new Redis({
     url: process.env.UPSTASH_REDIS_REST_URL,
     token: process.env.UPSTASH_REDIS_REST_TOKEN,
   });
-  ratelimit = new Ratelimit({
+  ratelimitGuest = new Ratelimit({
+    redis: redis,
+    limiter: Ratelimit.slidingWindow(10, "1 d"),
+    prefix: "ratelimit_guest",
+  });
+  ratelimitUser = new Ratelimit({
     redis: redis,
     limiter: Ratelimit.slidingWindow(30, "1 d"),
+    prefix: "ratelimit_user",
   });
 }
 
@@ -63,8 +70,9 @@ export async function POST(req) {
       const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
       const identifier = authenticatedEmail ? authenticatedEmail : `ip_${ip}`;
 
-      if (ratelimit) {
-        const { success } = await ratelimit.limit(identifier);
+      if (ratelimitGuest && ratelimitUser) {
+        const limiter = authenticatedEmail ? ratelimitUser : ratelimitGuest;
+        const { success } = await limiter.limit(identifier);
         if (!success) {
           return new Response("Waduh ngab, jatah limit harian lu udah ludes (mentok limit)! Lu nanya mulu pusing pala gua, mending lu tidur aja gih, tunggu besok!", { status: 429 });
         }
