@@ -40,7 +40,7 @@ if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) 
 
 export async function POST(req) {
   try {
-    const { message, history, image, toxicity = 3, user = 'guest', userMemory = [], chatMode = 'solo' } = await req.json();
+    const { message, history, image, documentText, toxicity = 3, user = 'guest', userMemory = [], chatMode = 'solo' } = await req.json();
 
     // ==========================================
     // RATE LIMITING & AUTH LOGIC
@@ -209,7 +209,12 @@ export async function POST(req) {
     }
 
     // ===== ROUTER LOGIC =====
-    const useGemini = !!image; // HANYA gunakan Gemini jika SEDANG mengirim gambar baru
+    let finalMessage = message || '';
+    if (documentText) {
+      finalMessage += `\n\n[DOKUMEN LAMPIRAN]\n${documentText}`;
+    }
+
+    const useGemini = !!image || !!documentText; // GUNAKAN Gemini jika ada gambar atau dokumen!
 
     if (!useGemini && groqInstances.length > 0) {
       // ==========================================
@@ -219,7 +224,7 @@ export async function POST(req) {
         role: msg.role === 'model' ? 'assistant' : 'user',
         content: msg.content || ' '
       }));
-      groqHistory.push({ role: 'user', content: message || ' ' });
+      groqHistory.push({ role: 'user', content: finalMessage || ' ' });
 
       const groqMessages = [
         { role: 'system', content: systemInstruction },
@@ -298,7 +303,7 @@ export async function POST(req) {
         return { role: msg.role === 'model' ? 'model' : 'user', parts };
       });
 
-      const currentParts = [{ text: message || 'Liat gambar ini' }];
+      const currentParts = [{ text: finalMessage || 'Analisis dokumen/gambar ini' }];
       if (image) {
         try {
           const mimeType = image.split(';')[0].split(':')[1];

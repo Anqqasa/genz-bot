@@ -120,6 +120,12 @@ export default function ChatBubble({
       <div className="message user">
         {msg.image && <img src={msg.image} alt="User Upload" className="uploaded-image" />}
         
+        {msg.documentName && (
+          <div style={{fontSize: '0.8rem', background: 'rgba(139,92,246,0.2)', padding: '6px 10px', borderRadius: '6px', marginBottom: '8px', border: '1px solid var(--neon-purple)', color: '#fff', display: 'inline-block'}}>
+            📄 Lampiran Dokumen: <strong>{msg.documentName}</strong>
+          </div>
+        )}
+        
         {isEditing ? (
           <div className="edit-message-area" style={{display: 'flex', flexDirection: 'column', gap: '0.5rem'}}>
             <textarea 

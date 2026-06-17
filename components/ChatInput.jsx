@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useEffect } from 'react';
-import { Paperclip, Mic, Send, Image as ImageIcon, X } from 'lucide-react';
+import { Paperclip, Mic, Send, Image as ImageIcon, X, FileText } from 'lucide-react';
 
 export default function ChatInput({ 
   input, setInput, 
@@ -9,11 +9,13 @@ export default function ChatInput({
   isListening, 
   cooldown, 
   selectedImage, setSelectedImage, 
+  selectedDocument, setSelectedDocument,
   onSendMessage, 
   onStartListening,
   onOpenMemeGenerator
 }) {
   const fileInputRef = useRef(null);
+  const docInputRef = useRef(null);
   const chatInputRef = useRef(null);
 
   useEffect(() => {
@@ -53,6 +55,17 @@ export default function ChatInput({
     }
   };
 
+  const handleDocUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 4 * 1024 * 1024) {
+        alert("Ukuran dokumen terlalu besar! Maksimal 4MB ngab.");
+        return;
+      }
+      setSelectedDocument(file);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     onSendMessage();
@@ -66,6 +79,16 @@ export default function ChatInput({
           <button onClick={() => setSelectedImage(null)} className="clear-img-btn"><X size={16} /></button>
         </div>
       )}
+      
+      {selectedDocument && (
+        <div className="doc-preview" style={{ padding: '0.5rem 1rem', background: 'rgba(139,92,246,0.1)', border: '1px solid var(--neon-purple)', borderRadius: '8px', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#fff' }}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+            <FileText size={16} color="var(--neon-purple)" />
+            <span style={{fontSize: '0.85rem', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{selectedDocument.name}</span>
+          </div>
+          <button type="button" onClick={() => setSelectedDocument(null)} className="clear-img-btn" style={{position:'static', transform:'none', width:'24px', height:'24px'}}><X size={14} /></button>
+        </div>
+      )}
 
       <form className="input-area" onSubmit={handleSubmit}>
         <input 
@@ -76,8 +99,20 @@ export default function ChatInput({
           style={{display: 'none'}} 
           disabled={cooldown > 0}
         />
+        <input 
+          type="file" 
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" 
+          ref={docInputRef} 
+          onChange={handleDocUpload} 
+          style={{display: 'none'}} 
+          disabled={cooldown > 0}
+        />
         
         <button type="button" onClick={() => fileInputRef.current.click()} className="mic-btn attach-btn" title="Kirim Foto" disabled={isLoading || cooldown > 0} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+          <ImageIcon size={20} />
+        </button>
+
+        <button type="button" onClick={() => docInputRef.current.click()} className="mic-btn attach-btn" title="Kirim Dokumen Laporan" disabled={isLoading || cooldown > 0} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
           <Paperclip size={20} />
         </button>
 
@@ -102,7 +137,7 @@ export default function ChatInput({
           disabled={isLoading || cooldown > 0}
         />
         
-        <button type="submit" className="send-btn" disabled={(!input.trim() && !selectedImage) || isLoading || cooldown > 0} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <button type="submit" className="send-btn" disabled={(!input.trim() && !selectedImage && !selectedDocument) || isLoading || cooldown > 0} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
           <Send size={20} />
         </button>
       </form>

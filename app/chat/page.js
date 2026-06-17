@@ -34,6 +34,7 @@ export default function Home() {
   const [isListening, setIsListening] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedDocument, setSelectedDocument] = useState(null);
   const [streamingContent, setStreamingContent] = useState('');
   
   const [playingIndex, setPlayingIndex] = useState(null);
@@ -174,22 +175,47 @@ export default function Home() {
   const sendMessage = async (customText = null, customImage = null, overrideMessages = null) => {
     const textToSend = customText !== null ? customText : input;
     const imageToSend = customImage !== null ? customImage : selectedImage;
+    const docToSend = customText !== null ? null : selectedDocument;
     
-    if (!textToSend.trim() && !imageToSend) return;
+    if (!textToSend.trim() && !imageToSend && !docToSend) return;
+
+    if (customText === null) {
+      setInput('');
+      setSelectedImage(null);
+      setSelectedDocument(null);
+    }
+    setIsLoading(true);
+
+    let documentText = null;
+    if (docToSend) {
+      const formData = new FormData();
+      formData.append('file', docToSend);
+      try {
+        const parseRes = await fetch('/api/parse-doc', { method: 'POST', body: formData });
+        const parseData = await parseRes.json();
+        if (parseRes.ok && parseData.text) {
+          documentText = `Nama File: ${docToSend.name}\n\nIsi Dokumen:\n${parseData.text}`;
+        } else {
+          alert("Gagal membaca dokumen: " + (parseData.error || 'Unknown error'));
+          setIsLoading(false);
+          return;
+        }
+      } catch(e) {
+        alert("Error upload dokumen: " + e.message);
+        setIsLoading(false);
+        return;
+      }
+    }
 
     const currentMessages = overrideMessages !== null ? overrideMessages : messages;
     const newUserMessage = { role: 'user', content: textToSend, image: imageToSend };
+    if (docToSend) newUserMessage.documentName = docToSend.name;
     
     const messagesWithUser = [...currentMessages, newUserMessage];
     setMessages(messagesWithUser);
     syncSession(messagesWithUser);
     setTimeout(scrollToBottom, 100);
     
-    if (customText === null) {
-      setInput('');
-      setSelectedImage(null);
-    }
-    setIsLoading(true);
     setMessages((prev) => [...prev, { role: 'model', content: '' }]);
     setTimeout(scrollToBottom, 100);
 
@@ -202,7 +228,7 @@ export default function Home() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: headers,
-        body: JSON.stringify({ message: textToSend, history: currentMessages, image: imageToSend, toxicity, userMemory, chatMode }),
+        body: JSON.stringify({ message: textToSend, history: currentMessages, image: imageToSend, documentText, toxicity, userMemory, chatMode }),
       });
 
       const rateLimitRemaining = res.headers.get('X-RateLimit-Remaining');
@@ -418,6 +444,8 @@ export default function Home() {
           cooldown={cooldown}
           selectedImage={selectedImage}
           setSelectedImage={setSelectedImage}
+          selectedDocument={selectedDocument}
+          setSelectedDocument={setSelectedDocument}
           onSendMessage={() => sendMessage()}
           onStartListening={startListening}
         />
