@@ -466,14 +466,14 @@
   background: var(--glass-bg-bot);
   border: 1px solid var(--glass-border);
   border-bottom-left-radius: 4px;
-  box-shadow: inset 0 0 10px rgba(6, 182, 212, 0.05), 0 4px 20px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
 }
 
 .message.user {
   background: var(--glass-bg-user);
   border: 1px solid var(--glass-border);
   border-bottom-right-radius: 4px;
-  box-shadow: inset 0 0 10px rgba(139, 92, 246, 0.05), 0 4px 20px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
 }
 
 .uploaded-image {
@@ -491,9 +491,9 @@
 }
 
 .play-audio-btn {
-  background: rgba(0, 242, 254, 0.05);
-  border: 1px solid rgba(0, 242, 254, 0.3);
-  color: var(--neon-cyan);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
   border-radius: 20px;
   padding: 0.4rem 0.8rem;
   display: flex;
@@ -507,9 +507,10 @@
 }
 
 .play-audio-btn:hover {
-  background: rgba(0, 242, 254, 0.15);
-  box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
   transform: translateY(-2px);
+  color: #fff;
 }
 
 /* Image Preview */
@@ -560,7 +561,7 @@
 
 .mic-btn, .attach-btn {
   background: transparent;
-  border: 1px solid rgba(254, 9, 121, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   width: 44px;
   height: 44px;
@@ -568,27 +569,28 @@
   align-items: center;
   justify-content: center;
   font-size: 1.1rem;
-  color: var(--neon-pink);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   flex-shrink: 0;
 }
 
 .attach-btn {
-  border-color: rgba(0, 242, 254, 0.5);
-  color: var(--neon-cyan);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-secondary);
 }
 
 .mic-btn:hover:not(:disabled), .attach-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.1);
   transform: scale(1.05);
+  color: #fff;
 }
 
 .mic-btn.recording {
-  background: rgba(254, 9, 121, 0.2);
-  border-color: var(--neon-pink);
-  box-shadow: 0 0 20px var(--neon-pink);
-  animation: neonPulsePink 1s infinite;
+  background: rgba(255, 0, 0, 0.2);
+  border-color: #ff4444;
+  box-shadow: none;
+  animation: none;
   color: white;
 }
 
@@ -604,23 +606,21 @@
 }
 
 .send-btn {
-  background: transparent;
-  border: 1px solid rgba(0, 242, 254, 0.5);
+  background: #ffffff;
+  border: none;
   border-radius: 50%;
   width: 44px;
   height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--neon-cyan);
+  color: #000000;
   cursor: pointer;
   transition: all 0.3s;
 }
 
 .send-btn:hover:not(:disabled) {
-  background: var(--neon-cyan);
-  color: #000;
-  box-shadow: 0 0 20px rgba(0, 242, 254, 0.5);
+  background: #e4e4e7;
   transform: scale(1.05);
 }
 

@@ -1,20 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
 
 :root, [data-theme="cyberpunk"] {
-  --bg-dark: #0B1120;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
+  --bg-dark: #000000;
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
   
-  /* Premium AI Theme Colors */
-  --neon-cyan: #06b6d4;
-  --neon-pink: #F43F5E;
-  --neon-purple: #6366f1;
+  /* Monochrome Minimalist Accents */
+  --neon-cyan: #e4e4e7;
+  --neon-pink: #ffffff;
+  --neon-purple: #a1a1aa;
   
   /* Glassmorphism Settings */
-  --glass-bg-bot: rgba(15, 23, 42, 0.65);
-  --glass-bg-user: rgba(30, 41, 59, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.04);
-  --glass-blur: blur(32px);
+  --glass-bg-bot: rgba(255, 255, 255, 0.03);
+  --glass-bg-user: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-blur: blur(24px);
 }
 
 [data-theme="y2k"] {
@@ -73,8 +73,8 @@ body::before {
   position: absolute;
   top: -20%; left: -10%;
   width: 60vw; height: 60vw;
-  background: radial-gradient(circle, var(--neon-purple) 0%, transparent 50%);
-  opacity: 0.15;
+  background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 50%);
+  opacity: 0.5;
   filter: blur(120px);
   z-index: -1;
   animation: floatOrb 20s ease-in-out infinite alternate;
@@ -85,8 +85,8 @@ body::after {
   position: absolute;
   bottom: -20%; right: -10%;
   width: 50vw; height: 50vw;
-  background: radial-gradient(circle, var(--neon-cyan) 0%, transparent 50%);
-  opacity: 0.15;
+  background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 50%);
+  opacity: 0.5;
   filter: blur(100px);
   z-index: -1;
   animation: floatOrb 25s ease-in-out infinite alternate-reverse;

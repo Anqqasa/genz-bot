@@ -100,7 +100,7 @@ export default function ChatBubble({
                       <Share2 size={14} /> Share
                     </button>
                     {isLast && (
-                      <button onClick={onRegenerate} className="play-audio-btn" style={{borderColor: 'var(--neon-pink)', color: 'var(--neon-pink)', display: 'flex', alignItems: 'center', gap: '0.3rem'}}>
+                      <button onClick={onRegenerate} className="play-audio-btn" style={{display: 'flex', alignItems: 'center', gap: '0.3rem'}}>
                         <RefreshCw size={14} /> Regenerate
                       </button>
                     )}
@@ -135,7 +135,7 @@ export default function ChatBubble({
             />
             <div style={{display: 'flex', gap: '0.5rem', justifyContent: 'flex-end'}}>
               <button onClick={() => setIsEditing(false)} style={{background: 'transparent', color: 'white', border: 'none', cursor: 'pointer', padding: '0.2rem 0.5rem'}}>Batal</button>
-              <button onClick={handleEditSubmit} style={{background: 'var(--neon-cyan)', color: 'black', border: 'none', cursor: 'pointer', padding: '0.3rem 0.8rem', borderRadius: '4px', fontWeight: 'bold'}}>Kirim Ulang</button>
+              <button onClick={handleEditSubmit} style={{background: '#ffffff', color: '#000000', border: 'none', cursor: 'pointer', padding: '0.3rem 0.8rem', borderRadius: '4px', fontWeight: 'bold'}}>Kirim Ulang</button>
             </div>
           </div>
         ) : (

@@ -42,9 +42,7 @@
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.5px;
-  background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #ffffff;
 }
 
 .landing-main {
@@ -96,7 +94,7 @@
 }
 
 .gradient-text {
-  background: linear-gradient(to right, var(--neon-pink), var(--neon-purple), var(--neon-cyan));
+  background: linear-gradient(to right, #ffffff, #a1a1aa, #ffffff);
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -133,16 +131,16 @@
 }
 
 .cta-button.primary {
-  background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
-  color: #fff;
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  color: #000000;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+  border: 1px solid #ffffff;
 }
 
 .cta-button.primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
-  background: linear-gradient(135deg, #a78bfa, #818cf8);
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+  background: #e4e4e7;
 }
 
 .mascot-showcase {
