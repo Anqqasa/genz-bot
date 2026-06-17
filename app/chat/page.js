@@ -247,12 +247,13 @@ export default function Home() {
         });
         // Remove the tags from the final message visually
         finalBotResponse = botResponse.replace(factRegex, '').trim();
-        setMessages(prev => {
-          const newMsgs = [...prev];
-          newMsgs[newMsgs.length - 1].content = finalBotResponse;
-          return newMsgs;
-        });
       }
+
+      setMessages(prev => {
+        const newMsgs = [...prev];
+        newMsgs[newMsgs.length - 1].content = finalBotResponse;
+        return newMsgs;
+      });
       
       // Simpan final state ke session global!
       const finalAllMessages = [...messagesWithUser, { role: 'model', content: finalBotResponse }];
