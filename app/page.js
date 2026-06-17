@@ -22,7 +22,9 @@ export default function LandingPage() {
       <main className="landing-main">
         <div className="landing-content">
           <div className="hero-section">
-            <div className="badge">✨ Bukan AI Biasa</div>
+            <div className="badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+              <Sparkles size={16} /> Bukan AI Biasa
+            </div>
             <h1 className="hero-title">
               Siap-Siap Kena Mental <br/><span className="gradient-text">Breakdance</span>
             </h1>
