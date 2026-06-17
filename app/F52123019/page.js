@@ -34,7 +34,7 @@ export default function AdminDashboard() {
     checkAdmin();
   }, [router]);
 
-  const fetchStats = async (token) => {
+  async function fetchStats(token) {
     try {
       const res = await fetch('/api/admin', {
         method: 'POST',
@@ -56,7 +56,7 @@ export default function AdminDashboard() {
     } catch (e) {
       console.error(e);
     }
-  };
+  }
 
   const handleBanUser = async (userId, email) => {
     if (!confirm(`Yakin mau ban/hapus user ${email}? Data cloud_saves dia juga bakal nyangkut.`)) return;

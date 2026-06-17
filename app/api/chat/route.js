@@ -1,7 +1,9 @@
 import { GoogleGenAI } from '@google/genai';
 import Groq from 'groq-sdk';
 import { search } from 'duck-duck-scrape';
-
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
+import { supabaseAdmin } from '../../../lib/supabaseAdmin';
 // Sistem Kunci Otomatis Gemini (Round-Robin)
 let activeKeyIndex = 0;
 const rawKeys = process.env.GEMINI_API_KEYS || process.env.GEMINI_API_KEY || '';
@@ -13,16 +15,28 @@ const rawGroqKeys = process.env.GROQ_API_KEYS || process.env.GROQ_API_KEY || '';
 const groqKeys = rawGroqKeys.split(',').map(k => k.trim()).filter(k => k.length > 0);
 const groqInstances = groqKeys.map(key => new Groq({ apiKey: key }));
 
-// Rate Limiter Cache (Memory)
+// Rate Limiter Cache (Memory Fallback)
 const usageTracker = new Map();
 let lastResetDate = new Date().toISOString().split('T')[0];
+
+let ratelimit = null;
+if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+  const redis = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN,
+  });
+  ratelimit = new Ratelimit({
+    redis: redis,
+    limiter: Ratelimit.slidingWindow(30, "1 d"),
+  });
+}
 
 export async function POST(req) {
   try {
     const { message, history, image, toxicity = 3, user = 'guest', userMemory = [], chatMode = 'solo' } = await req.json();
 
     // ==========================================
-    // RATE LIMITING LOGIC
+    // RATE LIMITING & AUTH LOGIC
     // ==========================================
     const today = new Date().toISOString().split('T')[0];
     if (today !== lastResetDate) {
@@ -30,20 +44,38 @@ export async function POST(req) {
       lastResetDate = today;
     }
 
-    if (!user.includes('anqqasa')) {
-      // Dapatkan IP address jika guest, namun karena di middleware Vercel IP ada di header 'x-forwarded-for', 
-      // kita gunakan identifier gabungan (contoh: guest_192.168.1.1) jika user == 'guest'.
-      // Untuk sederhananya, kita baca IP:
-      const ip = req.headers.get('x-forwarded-for') || 'unknown';
-      const identifier = user === 'guest' ? `guest_${ip}` : user;
-      
-      const currentUsage = usageTracker.get(identifier) || 0;
-      const MAX_LIMIT = user === 'guest' ? 10 : 30;
-      
-      if (currentUsage >= MAX_LIMIT) {
-        return new Response("Waduh ngab, jatah limit harian lu udah ludes (mentok limit)! Lu nanya mulu pusing pala gua, mending lu tidur aja gih, tunggu besok!", { status: 429 });
+    const authHeader = req.headers.get('Authorization');
+    let authenticatedEmail = null;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      if (supabaseAdmin) {
+        const { data: { user: authUser }, error } = await supabaseAdmin.auth.getUser(token);
+        if (!error && authUser) {
+          authenticatedEmail = authUser.email;
+        }
       }
-      usageTracker.set(identifier, currentUsage + 1);
+    }
+
+    const isBypass = authenticatedEmail && authenticatedEmail.includes('anqqasa');
+
+    if (!isBypass) {
+      const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
+      const identifier = authenticatedEmail ? authenticatedEmail : `ip_${ip}`;
+
+      if (ratelimit) {
+        const { success } = await ratelimit.limit(identifier);
+        if (!success) {
+          return new Response("Waduh ngab, jatah limit harian lu udah ludes (mentok limit)! Lu nanya mulu pusing pala gua, mending lu tidur aja gih, tunggu besok!", { status: 429 });
+        }
+      } else {
+        const currentUsage = usageTracker.get(identifier) || 0;
+        const MAX_LIMIT = authenticatedEmail ? 30 : 10;
+        if (currentUsage >= MAX_LIMIT) {
+          return new Response("Waduh ngab, jatah limit harian lu udah ludes (mentok limit)! Lu nanya mulu pusing pala gua, mending lu tidur aja gih, tunggu besok!", { status: 429 });
+        }
+        usageTracker.set(identifier, currentUsage + 1);
+      }
     }
 
     if (!message && !image) {

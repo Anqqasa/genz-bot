@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bot, Menu, Cloud, Smile, Meh, Flame } from 'lucide-react';
 import html2canvas from 'html2canvas';
-
 import { useAppContext } from '../../context/AppContext';
+import { supabase } from '../../lib/supabase';
 import ChatSidebar from '../../components/ChatSidebar';
 import ChatBubble from '../../components/ChatBubble';
 import ChatInput from '../../components/ChatInput';
@@ -33,6 +33,7 @@ export default function Home() {
   const [isListening, setIsListening] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [streamingContent, setStreamingContent] = useState('');
   
   const [playingIndex, setPlayingIndex] = useState(null);
 
@@ -47,6 +48,7 @@ export default function Home() {
     if (activeSessionId) {
       const activeSession = sessions.find(s => s.id === activeSessionId);
       if (activeSession) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMessages(activeSession.messages);
       }
     }
@@ -191,9 +193,14 @@ export default function Home() {
     setTimeout(scrollToBottom, 100);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: headers,
         body: JSON.stringify({ message: textToSend, history: currentMessages, image: imageToSend, toxicity, userMemory, chatMode }),
       });
 
@@ -218,13 +225,10 @@ export default function Home() {
         const { value, done } = await reader.read();
         if (done) break;
         botResponse += decoder.decode(value, { stream: true });
-        setMessages(prev => {
-          const newMsgs = [...prev];
-          newMsgs[newMsgs.length - 1].content = botResponse;
-          return newMsgs;
-        });
+        setStreamingContent(botResponse);
         scrollToBottom();
       }
+      setStreamingContent('');
       
       // Extract Long-Term Memory Facts after streaming completes
       const factRegex = /\[FACT:\s*([^\]]+?)\]/gi;
@@ -368,7 +372,7 @@ export default function Home() {
           {messages.map((msg, index) => (
             <ChatBubble 
               key={index} 
-              msg={msg} 
+              msg={isLoading && index === messages.length - 1 && msg.role === 'model' ? { ...msg, content: streamingContent || '' } : msg} 
               index={index} 
               isLast={index === messages.length - 1}
               playingIndex={playingIndex}

@@ -74,7 +74,6 @@ export function AppProvider({ children }) {
     setSessions(updatedSessions);
     setActiveSessionId(newId);
     setIsSidebarOpen(false);
-    saveState(updatedSessions, userMemory, theme);
   };
 
   const clearAllSessions = async () => {
@@ -84,34 +83,24 @@ export function AppProvider({ children }) {
     setSessions(newSessions);
     setActiveSessionId(defaultNewId);
     setIsSidebarOpen(false);
-    
-    // Langsung hapus userMemory juga biar benar-benar bersih
     setUserMemory([]);
-    await saveState(newSessions, [], theme);
   };
 
   const updateSessionMessages = (sessionId, msgs) => {
-    let updatedSessions = [];
     setSessions(prev => {
-      updatedSessions = prev.map(s => {
+      return prev.map(s => {
         if (s.id === sessionId) {
           return { ...s, messages: msgs };
         }
         return s;
       });
-      return updatedSessions;
     });
-    // Panggil saveState async
-    setTimeout(() => saveState(updatedSessions, userMemory, theme), 100);
   };
 
   const updateSessionTitle = (sessionId, newTitle) => {
-    let updatedSessions = [];
     setSessions(prev => {
-      updatedSessions = prev.map(s => s.id === sessionId ? { ...s, title: newTitle } : s);
-      return updatedSessions;
+      return prev.map(s => s.id === sessionId ? { ...s, title: newTitle } : s);
     });
-    setTimeout(() => saveState(updatedSessions, userMemory, theme), 100);
   };
 
   const deleteSessionById = (id) => {
@@ -124,7 +113,6 @@ export function AppProvider({ children }) {
     if (activeSessionId === id) {
       setActiveSessionId(newSessions[0].id);
     }
-    saveState(newSessions, userMemory, theme);
   };
 
   useEffect(() => {
@@ -142,6 +130,16 @@ export function AppProvider({ children }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Sync state to cloud and local storage
+  useEffect(() => {
+    if (isInitialized && !isInitialLoad) {
+      const debounceTimer = setTimeout(() => {
+        saveState(sessions, userMemory, theme);
+      }, 500); // 500ms debounce to avoid spamming the DB
+      return () => clearTimeout(debounceTimer);
+    }
+  }, [sessions, userMemory, theme, isInitialized, isInitialLoad]);
 
   // Theme application
   useEffect(() => {

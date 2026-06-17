@@ -13,6 +13,7 @@ export default function BroadcastPopup() {
       try {
         const lastSeen = localStorage.getItem('last_seen_broadcast');
         if (lastSeen !== broadcastMessage) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setIsOpen(true);
         }
       } catch (e) {
