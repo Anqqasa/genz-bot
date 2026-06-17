@@ -101,7 +101,7 @@ export async function POST(req) {
         usageTracker.set(identifier, currentUsage + 1);
       }
     } else {
-      currentLimitInfo = { limit: '∞', remaining: '∞' };
+      currentLimitInfo = { limit: 'Unlimited', remaining: 'Unlimited' };
     }
 
     if (!message && !image) {

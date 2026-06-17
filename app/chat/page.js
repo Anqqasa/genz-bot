@@ -257,7 +257,7 @@ export default function Home() {
       const rateLimitRemaining = res.headers.get('X-RateLimit-Remaining');
       const rateLimitTotal = res.headers.get('X-RateLimit-Limit');
       if (rateLimitRemaining && rateLimitTotal) {
-        const limitStr = `${rateLimitRemaining} / ${rateLimitTotal}`;
+        const limitStr = rateLimitRemaining === 'Unlimited' ? '∞' : `${rateLimitRemaining} / ${rateLimitTotal}`;
         setRemainingLimit(limitStr);
         localStorage.setItem('genz_remaining_limit', limitStr);
       }
