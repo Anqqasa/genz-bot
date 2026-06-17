@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { User, Volume2, Square, Share2, RefreshCw, Pencil } from 'lucide-react';
+import { User, Volume2, Square, Share2, RefreshCw, Pencil, FileText } from 'lucide-react';
 import AutoMeme from './AutoMeme';
 import Mascot from './Mascot';
 
@@ -121,8 +121,8 @@ export default function ChatBubble({
         {msg.image && <img src={msg.image} alt="User Upload" className="uploaded-image" />}
         
         {msg.documentName && (
-          <div style={{fontSize: '0.8rem', background: 'rgba(139,92,246,0.2)', padding: '6px 10px', borderRadius: '6px', marginBottom: '8px', border: '1px solid var(--neon-purple)', color: '#fff', display: 'inline-block'}}>
-            📄 Lampiran Dokumen: <strong>{msg.documentName}</strong>
+          <div style={{fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)', padding: '6px 10px', borderRadius: '6px', marginBottom: '8px', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', display: 'inline-flex', alignItems: 'center', gap: '0.3rem'}}>
+            <FileText size={14} /> Lampiran Dokumen: <strong>{msg.documentName}</strong>
           </div>
         )}
         
