@@ -64,7 +64,10 @@ export async function POST(req) {
       }
     }
 
-    const isBypass = authenticatedEmail && authenticatedEmail.includes('anqqasa');
+    const isBypass = authenticatedEmail && (
+      authenticatedEmail.includes('anqqasa') || 
+      authenticatedEmail === 'anggasaputra26112004@gmail.com'
+    );
 
     let currentLimitInfo = { limit: '?', remaining: '?' };
 
