@@ -66,24 +66,39 @@ export async function POST(req) {
 
     const isBypass = authenticatedEmail && authenticatedEmail.includes('anqqasa');
 
+    let currentLimitInfo = { limit: '?', remaining: '?' };
+
     if (!isBypass) {
       const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
       const identifier = authenticatedEmail ? authenticatedEmail : `ip_${ip}`;
 
       if (ratelimitGuest && ratelimitUser) {
         const limiter = authenticatedEmail ? ratelimitUser : ratelimitGuest;
-        const { success } = await limiter.limit(identifier);
+        const { success, limit, remaining } = await limiter.limit(identifier);
+        currentLimitInfo = { limit, remaining };
+        
         if (!success) {
-          return new Response("Waduh ngab, jatah limit harian lu udah ludes (mentok limit)! Lu nanya mulu pusing pala gua, mending lu tidur aja gih, tunggu besok!", { status: 429 });
+          return new Response("Waduh ngab, jatah limit harian lu udah ludes (mentok limit)! Lu nanya mulu pusing pala gua, mending lu tidur aja gih, tunggu besok!", { 
+            status: 429,
+            headers: { 'X-RateLimit-Limit': limit.toString(), 'X-RateLimit-Remaining': remaining.toString() }
+          });
         }
       } else {
         const currentUsage = usageTracker.get(identifier) || 0;
         const MAX_LIMIT = authenticatedEmail ? 30 : 10;
+        const remaining = Math.max(0, MAX_LIMIT - (currentUsage + 1));
+        currentLimitInfo = { limit: MAX_LIMIT, remaining };
+        
         if (currentUsage >= MAX_LIMIT) {
-          return new Response("Waduh ngab, jatah limit harian lu udah ludes (mentok limit)! Lu nanya mulu pusing pala gua, mending lu tidur aja gih, tunggu besok!", { status: 429 });
+          return new Response("Waduh ngab, jatah limit harian lu udah ludes (mentok limit)! Lu nanya mulu pusing pala gua, mending lu tidur aja gih, tunggu besok!", { 
+            status: 429,
+            headers: { 'X-RateLimit-Limit': MAX_LIMIT.toString(), 'X-RateLimit-Remaining': '0' }
+          });
         }
         usageTracker.set(identifier, currentUsage + 1);
       }
+    } else {
+      currentLimitInfo = { limit: '∞', remaining: '∞' };
     }
 
     if (!message && !image) {
@@ -255,7 +270,12 @@ export async function POST(req) {
 
       return new Response(stream, {
         status: 200,
-        headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Transfer-Encoding': 'chunked' },
+        headers: { 
+          'Content-Type': 'text/plain; charset=utf-8', 
+          'Transfer-Encoding': 'chunked',
+          'X-RateLimit-Limit': currentLimitInfo.limit.toString(),
+          'X-RateLimit-Remaining': currentLimitInfo.remaining.toString()
+        },
       });
 
     } else {
@@ -336,7 +356,12 @@ export async function POST(req) {
 
       return new Response(stream, {
         status: 200,
-        headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Transfer-Encoding': 'chunked' },
+        headers: { 
+          'Content-Type': 'text/plain; charset=utf-8', 
+          'Transfer-Encoding': 'chunked',
+          'X-RateLimit-Limit': currentLimitInfo.limit.toString(),
+          'X-RateLimit-Remaining': currentLimitInfo.remaining.toString()
+        },
       });
     }
 

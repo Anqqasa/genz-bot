@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { Paperclip, Mic, Send, Image as ImageIcon, X } from 'lucide-react';
 
 export default function ChatInput({ 
@@ -14,6 +14,13 @@ export default function ChatInput({
   onOpenMemeGenerator
 }) {
   const fileInputRef = useRef(null);
+  const chatInputRef = useRef(null);
+
+  useEffect(() => {
+    if (!isLoading && chatInputRef.current) {
+      chatInputRef.current.focus();
+    }
+  }, [isLoading]);
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -87,6 +94,7 @@ export default function ChatInput({
         
         <input
           type="text"
+          ref={chatInputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={cooldown > 0 ? `Sabar dek, tunggu ${cooldown} detik...` : "Ketik pesen lu di sini dek..."}

@@ -29,6 +29,7 @@ export default function Home() {
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
+  const [remainingLimit, setRemainingLimit] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [cooldown, setCooldown] = useState(0);
@@ -204,6 +205,12 @@ export default function Home() {
         body: JSON.stringify({ message: textToSend, history: currentMessages, image: imageToSend, toxicity, userMemory, chatMode }),
       });
 
+      const rateLimitRemaining = res.headers.get('X-RateLimit-Remaining');
+      const rateLimitTotal = res.headers.get('X-RateLimit-Limit');
+      if (rateLimitRemaining && rateLimitTotal) {
+        setRemainingLimit(`${rateLimitRemaining} / ${rateLimitTotal}`);
+      }
+
       if (!res.ok) {
         const errorText = await res.text();
         setMessages((prev) => {
@@ -343,7 +350,14 @@ export default function Home() {
             </div>
             <div>
               <h1 className="bot-name">SiPaling.AI</h1>
-              <span className="status"><span className="status-dot"></span> Online and Ready to Roast</span>
+              <span className="status">
+                <span className="status-dot"></span> Online and Ready to Roast
+                {remainingLimit && (
+                  <span style={{ marginLeft: '8px', fontSize: '0.75rem', color: '#fbbf24', background: 'rgba(251, 191, 36, 0.2)', padding: '2px 8px', borderRadius: '12px' }}>
+                    Sisa Limit: {remainingLimit}
+                  </span>
+                )}
+              </span>
             </div>
           </div>
           
