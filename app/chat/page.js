@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bot, Menu, Cloud, Smile, Meh, Flame } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useAppContext } from '../../context/AppContext';
 import { supabase } from '../../lib/supabase';
 import ChatSidebar from '../../components/ChatSidebar';
@@ -517,10 +519,10 @@ export default function Home() {
           <div id="share-card-template" className="share-card-container">
             <div className="share-card-header">
               <div className="share-card-logo">
-                <Mascot toxicity={toxicityLevel} size={40} />
+                <Mascot toxicity={toxicity} size={40} />
                 <div className="share-card-title">
                   <h3>SiPaling.AI</h3>
-                  <span>Level Toxic: {['Sopan', 'Asik', 'Sarkas', 'Roasting', 'Ngelunjak'][toxicityLevel-1]}</span>
+                  <span>Level Toxic: {['Sopan', 'Asik', 'Sarkas', 'Roasting', 'Ngelunjak'][toxicity-1]}</span>
                 </div>
               </div>
             </div>
